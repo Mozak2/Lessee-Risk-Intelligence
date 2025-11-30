@@ -1,0 +1,101 @@
+// Prisma schema for Airline Risk Rating MVP
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Airline master data
+model Airline {
+  id          String   @id @default(cuid())
+  icao        String   @unique
+  iata        String?
+  name        String
+  country     String
+  active      Boolean  @default(true)
+  fleetSize   Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  riskSnapshots AirlineRiskSnapshot[]
+  exposures     LeaseExposure[]
+
+  @@index([icao])
+  @@index([country])
+}
+
+// Risk snapshots - extensible design for future data sources
+model AirlineRiskSnapshot {
+  id              String   @id @default(cuid())
+  airlineId       String
+  airline         Airline  @relation(fields: [airlineId], references: [id], onDelete: Cascade)
+  
+  // Overall score
+  overallScore    Float    // 0-100
+  riskBucket      String   // Low/Medium/High
+  
+  // Component scores (extensible)
+  countryScore    Float?   // 0-100
+  activityScore   Float?   // 0-100
+  sizeScore       Float?   // 0-100
+  statusScore     Float?   // 0-100
+  
+  // Future dimensions
+  newsScore       Float?   // For future news sentiment analysis
+  financialScore  Float?   // For future financial health metrics
+  
+  // Metadata for caching and debugging
+  dataVersion     String   @default("1.0")
+  sourceData      Json?    // Store raw data for debugging
+  calculatedAt    DateTime @default(now())
+  expiresAt       DateTime // For cache invalidation
+  
+  createdAt       DateTime @default(now())
+
+  @@index([airlineId])
+  @@index([calculatedAt])
+  @@index([expiresAt])
+}
+
+// Portfolio management
+model Portfolio {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  userId      String?  // For future auth integration
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  exposures   LeaseExposure[]
+
+  @@index([userId])
+}
+
+// Lease exposure - links portfolios to airlines with exposure amounts
+model LeaseExposure {
+  id           String    @id @default(cuid())
+  portfolioId  String
+  portfolio    Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  
+  airlineId    String
+  airline      Airline   @relation(fields: [airlineId], references: [id], onDelete: Cascade)
+  
+  // Exposure details
+  exposureAmount Float     // In USD or relevant currency
+  currency       String    @default("USD")
+  numAircraft    Int?      // Number of aircraft leased
+  notes          String?
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([portfolioId, airlineId])
+  @@index([portfolioId])
+  @@index([airlineId])
+}
