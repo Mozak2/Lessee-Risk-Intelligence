@@ -11,6 +11,9 @@ import {
 import { enabledRiskSources } from './sources/risk-sources';
 import prisma from './db';
 
+// Re-export for convenience
+export type { RiskContext };
+
 /**
  * Calculate overall airline risk by aggregating all enabled risk sources
  */
@@ -30,12 +33,24 @@ export async function calculateAirlineRisk(
     
     const sourceComponents = await source.calculate(context);
     
-    // Merge components
-    Object.assign(allComponents, sourceComponents);
+    // Extract financial metadata if present and update context
+    if (source.key === 'financial' && sourceComponents.financialMetadata) {
+      context.financialData = sourceComponents.financialMetadata as any;
+    }
     
-    // Calculate weighted contribution
-    const sourceScore = Object.values(sourceComponents).reduce((sum: number, score: number) => sum + score, 0) / 
-                       Object.values(sourceComponents).length;
+    // Merge components (exclude metadata keys)
+    Object.entries(sourceComponents).forEach(([key, value]) => {
+      if (!key.endsWith('Metadata')) {
+        allComponents[key] = value;
+      }
+    });
+    
+    // Calculate weighted contribution (only from numeric scores)
+    const numericScores = Object.entries(sourceComponents)
+      .filter(([key]) => !key.endsWith('Metadata'))
+      .map(([, score]) => score as number);
+    
+    const sourceScore = numericScores.reduce((sum: number, score: number) => sum + score, 0) / numericScores.length;
     
     totalWeightedScore += sourceScore * source.weight;
     totalWeight += source.weight;

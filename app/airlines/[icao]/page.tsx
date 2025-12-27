@@ -2,8 +2,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getAirlineByIcao } from '@/lib/sources/aviation';
 import { getCountryInfo } from '@/lib/sources/restCountries';
-import { getFlightsLast24h } from '@/lib/sources/opensky';
-import { calculateAirlineRisk, RiskContext } from '@/lib/risk-aggregator';
+import { getOrCalculateAirlineRisk } from '@/lib/risk-cache';
+import { RiskContext } from '@/lib/risk-aggregator';
 
 async function getAirlineRiskData(icao: string) {
   try {
@@ -14,11 +14,8 @@ async function getAirlineRiskData(icao: string) {
       return null;
     }
     
-    // Fetch additional data for risk calculation
-    const [countryInfo, flightsLast24h] = await Promise.all([
-      getCountryInfo(airlineData.country),
-      getFlightsLast24h(icao),
-    ]);
+    // Fetch country info
+    const countryInfo = await getCountryInfo(airlineData.country);
     
     // Build context for risk calculation
     const context: RiskContext = {
@@ -28,19 +25,13 @@ async function getAirlineRiskData(icao: string) {
         country: airlineData.country,
         active: airlineData.active,
         fleetSize: airlineData.fleetSize,
+        ticker: airlineData.ticker,
       },
       countryInfo,
-      activityData: { flightsLast24h },
     };
     
-    // Calculate risk
-    const riskResult = await calculateAirlineRisk(context);
-    
-    // Debug logging
-    console.log(`\n=== Risk Calculation for ${icao} ===`);
-    console.log('Flights Last 24h:', flightsLast24h);
-    console.log('Risk Breakdown:', JSON.stringify(riskResult.breakdown, null, 2));
-    console.log('Components:', JSON.stringify(riskResult.components, null, 2));
+    // Get or calculate risk (with caching)
+    const riskResult = await getOrCalculateAirlineRisk(context);
     
     return {
       airline: {
@@ -51,6 +42,8 @@ async function getAirlineRiskData(icao: string) {
         country: airlineData.country,
         active: airlineData.active,
         fleetSize: airlineData.fleetSize,
+        isPublic: airlineData.isPublic,
+        ticker: airlineData.ticker,
       },
       risk: {
         overallScore: riskResult.overallScore,
@@ -109,7 +102,14 @@ export default async function AirlinePage({ params }: { params: { icao: string }
         <div className="px-4 py-5 sm:px-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{airline.name}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-3xl font-bold text-gray-900">{airline.name}</h1>
+                {airline.isPublic !== undefined && (
+                  <span className="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-700">
+                    {airline.isPublic ? 'Public' : 'Private'}
+                  </span>
+                )}
+              </div>
               <p className="mt-1 text-sm text-gray-500">
                 {airline.icao} {airline.iata && `/ ${airline.iata}`} • {airline.country}
               </p>
@@ -132,7 +132,8 @@ export default async function AirlinePage({ params }: { params: { icao: string }
             <div>
               <h3 className="text-lg leading-6 font-medium text-gray-900">Overall Risk Score</h3>
               <div className="mt-2 max-w-xl text-sm text-gray-500">
-                <p>Calculated on {new Date(risk.calculatedAt).toLocaleString()}</p>
+                <p>Last updated: {new Date(risk.calculatedAt).toLocaleString()}</p>
+                <p className="text-xs mt-1 italic">Based on derived estimates and public data</p>
               </div>
             </div>
             <div className="mt-5 sm:mt-0 text-center">
@@ -155,7 +156,7 @@ export default async function AirlinePage({ params }: { params: { icao: string }
       <div className="bg-white shadow sm:rounded-lg mb-6">
         <div className="px-4 py-5 sm:p-6">
           <h3 className="text-lg leading-6 font-medium text-gray-900 mb-2">Risk Components</h3>
-          <p className="text-sm text-gray-500 mb-4">Lower scores indicate lower risk (better performance)</p>
+          <p className="text-sm text-gray-500 mb-4">Lower scores indicate lower risk (better performance). These are derived estimates.</p>
           <div className="space-y-4">
             {risk.breakdown.map((component: any) => (
               <div key={component.key}>
@@ -163,9 +164,23 @@ export default async function AirlinePage({ params }: { params: { icao: string }
                   <span className="font-medium text-gray-700">
                     {component.name} ({Math.round(component.weight * 100)}% weight)
                   </span>
-                  <span className={`font-semibold ${getScoreColor(component.score)}`}>
-                    {component.score.toFixed(1)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`font-semibold ${getScoreColor(component.score)}`}>
+                      {component.score.toFixed(1)}
+                    </span>
+                    {component.score <= 10 && (
+                      <span className="text-xs text-green-700 font-medium">Excellent</span>
+                    )}
+                    {component.score > 10 && component.score <= 30 && (
+                      <span className="text-xs text-green-600 font-medium">Good</span>
+                    )}
+                    {component.score > 60 && component.score <= 80 && (
+                      <span className="text-xs text-red-600 font-medium">Concern</span>
+                    )}
+                    {component.score > 80 && (
+                      <span className="text-xs text-red-700 font-medium">High Risk</span>
+                    )}
+                  </div>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
                   <div
@@ -186,7 +201,7 @@ export default async function AirlinePage({ params }: { params: { icao: string }
       </div>
 
       {/* Detailed Metrics */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {/* Country Info */}
         <div className="bg-white shadow sm:rounded-lg">
           <div className="px-4 py-5 sm:p-6">
@@ -218,30 +233,31 @@ export default async function AirlinePage({ params }: { params: { icao: string }
           </div>
         </div>
 
-        {/* Activity Metrics */}
+        {/* Operational Presence */}
         <div className="bg-white shadow sm:rounded-lg">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-base font-semibold text-gray-900 mb-4">Activity Metrics</h3>
+            <h3 className="text-base font-semibold text-gray-900 mb-4">Operational Presence</h3>
             <dl className="space-y-2">
               <div>
-                <dt className="text-sm font-medium text-gray-500">Flights (Last 24h)</dt>
-                <dd className="text-2xl font-bold text-gray-900">
-                  {context.activityData?.flightsLast24h ?? 'N/A'}
-                </dd>
-                {context.activityData?.flightsLast24h !== undefined && (
-                  <dd className="text-xs text-gray-500 mt-1">
-                    {context.activityData.flightsLast24h >= 200 ? 'Very High Activity' :
-                     context.activityData.flightsLast24h >= 100 ? 'High Activity' :
-                     context.activityData.flightsLast24h >= 50 ? 'Moderate Activity' :
-                     context.activityData.flightsLast24h >= 10 ? 'Low Activity' :
-                     'Very Low Activity'}
-                  </dd>
-                )}
-              </div>
-              <div>
                 <dt className="text-sm font-medium text-gray-500">Operational Status</dt>
-                <dd className="text-sm text-gray-900">{airline.active ? 'Active' : 'Inactive'}</dd>
+                <dd className="text-sm text-gray-900">
+                  <span className={`inline-flex px-2 py-1 text-xs rounded-full ${airline.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {airline.active ? 'Active' : 'Inactive'}
+                  </span>
+                </dd>
               </div>
+              {airline.fleetSize !== undefined && (
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Fleet Presence</dt>
+                  <dd className="text-sm text-gray-900">
+                    {airline.fleetSize >= 200 ? 'Major Operator' :
+                     airline.fleetSize >= 50 ? 'Medium to Large' :
+                     airline.fleetSize >= 10 ? 'Small to Medium' :
+                     airline.fleetSize > 0 ? 'Very Small' :
+                     'Unknown'}
+                  </dd>
+                </div>
+              )}
             </dl>
           </div>
         </div>
@@ -272,6 +288,84 @@ export default async function AirlinePage({ params }: { params: { icao: string }
                 </div>
               )}
             </dl>
+          </div>
+        </div>
+
+        {/* Financial Metrics */}
+        <div className="bg-white shadow sm:rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h3 className="text-base font-semibold text-gray-900 mb-4">Financial Health</h3>
+            {context.financialData?.available ? (
+              <dl className="space-y-2">
+                {context.financialData.ticker && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Stock Ticker</dt>
+                    <dd className="text-sm font-mono text-gray-900">{context.financialData.ticker}</dd>
+                  </div>
+                )}
+                {context.financialData.debtToEquity !== undefined && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Debt-to-Equity</dt>
+                    <dd className="text-sm text-gray-900">
+                      {context.financialData.debtToEquity.toFixed(2)}
+                      <span className="ml-1 text-xs text-gray-500">
+                        {context.financialData.debtToEquity < 1 ? '(Excellent)' :
+                         context.financialData.debtToEquity < 2 ? '(Good)' :
+                         context.financialData.debtToEquity < 3 ? '(Moderate)' :
+                         '(High)'}
+                      </span>
+                    </dd>
+                  </div>
+                )}
+                {context.financialData.profitMargin !== undefined && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Profit Margin</dt>
+                    <dd className="text-sm text-gray-900">
+                      {context.financialData.profitMargin.toFixed(2)}%
+                      <span className="ml-1 text-xs text-gray-500">
+                        {context.financialData.profitMargin >= 10 ? '(Excellent)' :
+                         context.financialData.profitMargin >= 5 ? '(Good)' :
+                         context.financialData.profitMargin >= 0 ? '(Moderate)' :
+                         '(Loss)'}
+                      </span>
+                    </dd>
+                  </div>
+                )}
+                {context.financialData.cashToDebt !== undefined && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Cash-to-Debt</dt>
+                    <dd className="text-sm text-gray-900">
+                      {context.financialData.cashToDebt.toFixed(2)}
+                      <span className="ml-1 text-xs text-gray-500">
+                        {context.financialData.cashToDebt >= 1 ? '(Strong)' :
+                         context.financialData.cashToDebt >= 0.5 ? '(Good)' :
+                         context.financialData.cashToDebt >= 0.3 ? '(Moderate)' :
+                         '(Weak)'}
+                      </span>
+                    </dd>
+                  </div>
+                )}
+                {context.financialData.fiscalYear && (
+                  <div className="pt-2 border-t border-gray-200">
+                    <dt className="text-xs text-gray-400">Data Source</dt>
+                    <dd className="text-xs text-gray-600">
+                      {context.financialData.dataSource === 'mock' ? 'Mock Data' : 'API'} • FY {context.financialData.fiscalYear}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            ) : (
+              <div className="text-sm text-gray-500">
+                <p className="mb-2">
+                  {airline.isPublic === false 
+                    ? 'Financial data unavailable for government-owned airlines.'
+                    : 'Financial data unavailable for this airline.'}
+                </p>
+                {airline.ticker && (
+                  <p className="text-xs text-gray-400">Ticker: {airline.ticker}</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

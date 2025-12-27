@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -51,7 +51,7 @@ model AirlineRiskSnapshot {
   
   // Metadata for caching and debugging
   dataVersion     String   @default("1.0")
-  sourceData      Json?    // Store raw data for debugging
+  sourceData      String?  // Store raw data for debugging (JSON string for SQLite)
   calculatedAt    DateTime @default(now())
   expiresAt       DateTime // For cache invalidation
   

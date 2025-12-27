@@ -1,10 +1,37 @@
 import Link from 'next/link';
+import prisma from '@/lib/db';
 
 async function getPortfolios() {
-  // Mock data for demo - in production, this would fetch from database
-  return {
-    portfolios: []
-  };
+  try {
+    const portfolios = await prisma.portfolio.findMany({
+      include: {
+        exposures: {
+          include: {
+            airline: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Calculate summary for each portfolio
+    const portfoliosWithSummary = portfolios.map((portfolio) => {
+      const totalExposure = portfolio.exposures.reduce(
+        (sum, e) => sum + e.exposureAmount,
+        0
+      );
+      return {
+        ...portfolio,
+        totalExposure,
+        numAirlines: portfolio.exposures.length,
+      };
+    });
+
+    return { portfolios: portfoliosWithSummary };
+  } catch (error) {
+    console.error('Error fetching portfolios:', error);
+    return { portfolios: [] };
+  }
 }
 
 export default async function PortfoliosPage() {
@@ -45,7 +72,12 @@ export default async function PortfoliosPage() {
               />
             </svg>
             <h3 className="mt-2 text-sm font-medium text-gray-900">No portfolios</h3>
-            <p className="mt-1 text-sm text-gray-500">Get started by creating a new portfolio.</p>
+            <p className="mt-1 text-sm text-gray-500">
+              Get started by creating a portfolio to track your airline lease exposures.
+            </p>
+            <p className="mt-2 text-xs text-gray-400">
+              Group airlines by region, risk level, or investment strategy.
+            </p>
             <div className="mt-6">
               <Link
                 href="/portfolios/new"
@@ -68,10 +100,19 @@ export default async function PortfoliosPage() {
                   {portfolio.description && (
                     <p className="mt-1 text-sm text-gray-500 line-clamp-2">{portfolio.description}</p>
                   )}
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-sm text-gray-500">
-                      {portfolio.exposures.length} exposure{portfolio.exposures.length !== 1 ? 's' : ''}
-                    </span>
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Airlines</span>
+                      <span className="font-medium text-gray-900">{portfolio.numAirlines}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Total Exposure</span>
+                      <span className="font-medium text-gray-900">
+                        ${(portfolio.totalExposure / 1000000).toFixed(1)}M
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-4">
                     <span className="text-sm font-medium text-blue-600">View details →</span>
                   </div>
                 </div>

@@ -13,10 +13,30 @@ export async function POST(
     const body = await request.json();
     const { icao, exposureAmount, currency, numAircraft, notes } = body;
     
-    if (!icao || !exposureAmount) {
+    // Validation
+    if (!icao || icao.trim() === '') {
       return NextResponse.json(
-        { error: 'ICAO code and exposure amount are required' },
+        { error: 'ICAO code is required' },
         { status: 400 }
+      );
+    }
+    
+    if (!exposureAmount || exposureAmount <= 0) {
+      return NextResponse.json(
+        { error: 'Exposure amount must be greater than 0' },
+        { status: 400 }
+      );
+    }
+    
+    // Verify portfolio exists
+    const portfolio = await prisma.portfolio.findUnique({
+      where: { id: params.id },
+    });
+    
+    if (!portfolio) {
+      return NextResponse.json(
+        { error: 'Portfolio not found' },
+        { status: 404 }
       );
     }
     
@@ -30,7 +50,7 @@ export async function POST(
       
       if (!airlineData) {
         return NextResponse.json(
-          { error: 'Airline not found' },
+          { error: `Airline with ICAO code '${icao.toUpperCase()}' not found` },
           { status: 404 }
         );
       }
@@ -45,6 +65,7 @@ export async function POST(
           fleetSize: airlineData.fleetSize,
         },
       });
+      console.log('Created new airline:', airline.icao);
     }
     
     // Create exposure
@@ -52,16 +73,17 @@ export async function POST(
       data: {
         portfolioId: params.id,
         airlineId: airline.id,
-        exposureAmount,
+        exposureAmount: parseFloat(exposureAmount.toString()),
         currency: currency || 'USD',
-        numAircraft,
-        notes,
+        numAircraft: numAircraft ? parseInt(numAircraft.toString()) : null,
+        notes: notes || null,
       },
       include: {
         airline: true,
       },
     });
     
+    console.log('Exposure created successfully:', exposure.id);
     return NextResponse.json({ exposure }, { status: 201 });
   } catch (error: any) {
     console.error('Error creating exposure:', error);
@@ -75,7 +97,10 @@ export async function POST(
     }
     
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Failed to create exposure',
+        details: error.message || 'Unknown error'
+      },
       { status: 500 }
     );
   }

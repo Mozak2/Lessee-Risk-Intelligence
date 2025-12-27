@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, description, userId } = body;
     
-    if (!name) {
+    if (!name || name.trim() === '') {
       return NextResponse.json(
         { error: 'Portfolio name is required' },
         { status: 400 }
@@ -46,17 +46,21 @@ export async function POST(request: NextRequest) {
     
     const portfolio = await prisma.portfolio.create({
       data: {
-        name,
-        description,
-        userId,
+        name: name.trim(),
+        description: description?.trim() || null,
+        userId: userId || 'demo-user', // Default for MVP
       },
     });
     
+    console.log('Portfolio created successfully:', portfolio.id);
     return NextResponse.json({ portfolio }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating portfolio:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Failed to create portfolio',
+        details: error.message || 'Unknown error'
+      },
       { status: 500 }
     );
   }

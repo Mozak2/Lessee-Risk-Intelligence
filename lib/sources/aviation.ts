@@ -7,6 +7,8 @@ export interface AirlineData {
   country: string;
   active: boolean;
   fleetSize?: number;
+  isPublic?: boolean; // Whether the airline is publicly traded
+  ticker?: string; // Stock ticker symbol for financial data
 }
 
 /**
@@ -69,6 +71,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'United States',
       active: true,
       fleetSize: 865,
+      isPublic: true,
+      ticker: 'AAL',
     },
     'UAL': {
       icao: 'UAL',
@@ -77,6 +81,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'United States',
       active: true,
       fleetSize: 840,
+      isPublic: true,
+      ticker: 'UAL',
     },
     'DAL': {
       icao: 'DAL',
@@ -85,6 +91,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'United States',
       active: true,
       fleetSize: 920,
+      isPublic: true,
+      ticker: 'DAL',
     },
     'SWA': {
       icao: 'SWA',
@@ -93,6 +101,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'United States',
       active: true,
       fleetSize: 750,
+      isPublic: true,
+      ticker: 'LUV',
     },
     'JBU': {
       icao: 'JBU',
@@ -101,6 +111,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'United States',
       active: true,
       fleetSize: 280,
+      isPublic: true,
+      ticker: 'JBLU',
     },
     
     // European carriers
@@ -111,6 +123,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'France',
       active: true,
       fleetSize: 220,
+      isPublic: true, // Part of Air France-KLM
+      ticker: 'AF.PA',
     },
     'BAW': {
       icao: 'BAW',
@@ -119,6 +133,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'United Kingdom',
       active: true,
       fleetSize: 250,
+      isPublic: true, // Part of IAG
+      ticker: 'IAG.L',
     },
     'DLH': {
       icao: 'DLH',
@@ -127,6 +143,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'Germany',
       active: true,
       fleetSize: 280,
+      isPublic: true,
+      ticker: 'LHA.DE',
     },
     'KLM': {
       icao: 'KLM',
@@ -135,6 +153,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'Netherlands',
       active: true,
       fleetSize: 110,
+      isPublic: true, // Part of Air France-KLM
+      ticker: 'AF.PA',
     },
     'RYR': {
       icao: 'RYR',
@@ -143,6 +163,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'Ireland',
       active: true,
       fleetSize: 470,
+      isPublic: true,
+      ticker: 'RYA.L',
     },
     'EZY': {
       icao: 'EZY',
@@ -151,6 +173,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'United Kingdom',
       active: true,
       fleetSize: 320,
+      isPublic: true,
+      ticker: 'EZJ.L',
     },
     
     // Middle East carriers
@@ -161,6 +185,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'United Arab Emirates',
       active: true,
       fleetSize: 260,
+      isPublic: false, // Government-owned
+      ticker: undefined, // No public ticker
     },
     'QTR': {
       icao: 'QTR',
@@ -169,6 +195,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'Qatar',
       active: true,
       fleetSize: 200,
+      isPublic: false, // Government-owned
+      ticker: undefined, // No public ticker
     },
     'ETD': {
       icao: 'ETD',
@@ -177,6 +205,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'United Arab Emirates',
       active: true,
       fleetSize: 90,
+      isPublic: false, // Government-owned
+      ticker: undefined, // No public ticker
     },
     
     // Asian carriers
@@ -187,6 +217,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'Singapore',
       active: true,
       fleetSize: 180,
+      isPublic: true,
+      ticker: 'C6L.SI',
     },
     'CPA': {
       icao: 'CPA',
@@ -195,6 +227,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'Hong Kong',
       active: true,
       fleetSize: 150,
+      isPublic: true,
+      ticker: '0293.HK',
     },
     'JAL': {
       icao: 'JAL',
@@ -203,6 +237,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'Japan',
       active: true,
       fleetSize: 165,
+      isPublic: true,
+      ticker: '9201.T',
     },
     'ANA': {
       icao: 'ANA',
@@ -211,6 +247,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'Japan',
       active: true,
       fleetSize: 220,
+      isPublic: true,
+      ticker: '9202.T',
     },
     
     // Other notable carriers
@@ -221,6 +259,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'Canada',
       active: true,
       fleetSize: 190,
+      isPublic: true,
+      ticker: 'AC.TO',
     },
     'QFA': {
       icao: 'QFA',
@@ -229,6 +269,8 @@ function getMockAirlineData(icao: string): AirlineData | null {
       country: 'Australia',
       active: true,
       fleetSize: 130,
+      isPublic: true,
+      ticker: 'QAN.AX',
     },
   };
   

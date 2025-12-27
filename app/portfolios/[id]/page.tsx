@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import prisma from '@/lib/db';
-import { calculatePortfolioRisk } from '@/lib/risk-aggregator';
+import { calculatePortfolioRisk } from '@/lib/portfolio-risk';
 
 async function getPortfolio(id: string) {
   try {
@@ -87,7 +87,7 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
       </div>
 
       {/* Portfolio Risk Summary */}
-      {risk && (
+      {risk && portfolio.exposures.length > 0 && (
         <div className="bg-white shadow sm:rounded-lg mb-6">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Portfolio Risk Summary</h3>
@@ -95,14 +95,16 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
               <div>
                 <dt className="text-sm font-medium text-gray-500">Total Exposure</dt>
                 <dd className="mt-1 text-2xl font-semibold text-gray-900">
-                  ${risk.totalExposure.toLocaleString()}
+                  ${(risk.totalExposure / 1000000).toFixed(1)}M
                 </dd>
+                <dd className="text-xs text-gray-500">{risk.currency}</dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-gray-500">Weighted Avg Risk</dt>
-                <dd className={`mt-1 text-2xl font-semibold ${getScoreColor(risk.weightedAverageRisk)}`}>
-                  {risk.weightedAverageRisk}
+                <dt className="text-sm font-medium text-gray-500">Portfolio Risk</dt>
+                <dd className={`mt-1 text-2xl font-semibold ${getScoreColor(risk.portfolioRisk)}`}>
+                  {risk.portfolioRisk}
                 </dd>
+                <dd className="text-xs text-gray-500">Weighted Average</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Risk Bucket</dt>
@@ -117,8 +119,8 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                 </dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-gray-500">Number of Airlines</dt>
-                <dd className="mt-1 text-2xl font-semibold text-gray-900">{risk.numExposures}</dd>
+                <dt className="text-sm font-medium text-gray-500">Airlines</dt>
+                <dd className="mt-1 text-2xl font-semibold text-gray-900">{risk.topExposures.length}</dd>
               </div>
             </div>
 
@@ -128,23 +130,60 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                 <div className="bg-green-50 p-3 rounded-lg">
                   <div className="text-xs font-medium text-green-800">Low Risk</div>
                   <div className="text-lg font-semibold text-green-900">
-                    ${risk.exposureByBucket.Low.toLocaleString()}
+                    ${(risk.buckets.low / 1000000).toFixed(1)}M
+                  </div>
+                  <div className="text-xs text-green-700">
+                    {risk.totalExposure > 0 ? ((risk.buckets.low / risk.totalExposure) * 100).toFixed(0) : 0}%
                   </div>
                 </div>
                 <div className="bg-yellow-50 p-3 rounded-lg">
                   <div className="text-xs font-medium text-yellow-800">Medium Risk</div>
                   <div className="text-lg font-semibold text-yellow-900">
-                    ${risk.exposureByBucket.Medium.toLocaleString()}
+                    ${(risk.buckets.medium / 1000000).toFixed(1)}M
+                  </div>
+                  <div className="text-xs text-yellow-700">
+                    {risk.totalExposure > 0 ? ((risk.buckets.medium / risk.totalExposure) * 100).toFixed(0) : 0}%
                   </div>
                 </div>
                 <div className="bg-red-50 p-3 rounded-lg">
                   <div className="text-xs font-medium text-red-800">High Risk</div>
                   <div className="text-lg font-semibold text-red-900">
-                    ${risk.exposureByBucket.High.toLocaleString()}
+                    ${(risk.buckets.high / 1000000).toFixed(1)}M
+                  </div>
+                  <div className="text-xs text-red-700">
+                    {risk.totalExposure > 0 ? ((risk.buckets.high / risk.totalExposure) * 100).toFixed(0) : 0}%
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Empty state for portfolios without exposures */}
+      {portfolio.exposures.length === 0 && (
+        <div className="bg-white shadow sm:rounded-lg mb-6">
+          <div className="px-4 py-12 text-center">
+            <svg
+              className="mx-auto h-12 w-12 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No exposures yet</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Add airlines to this portfolio to start tracking risk.
+            </p>
+            <p className="mt-2 text-xs text-gray-400">
+              Search for airlines by ICAO code (e.g., AAL, UAL, DAL)
+            </p>
           </div>
         </div>
       )}

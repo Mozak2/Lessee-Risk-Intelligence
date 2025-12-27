@@ -1,13 +1,14 @@
-// Country risk source - assesses risk based on airline's country
+// Risk sources for airline risk assessment
 
 import { RiskSource, RiskComponents, RiskContext, RiskDimensionKey, normalizeScore } from '../risk-model';
+import { financialRiskSource } from './financial';
 
 export const countryRiskSource: RiskSource = {
   key: 'country' as RiskDimensionKey,
   name: 'Country Risk',
   description: 'Risk assessment based on the airline\'s country of operation',
   enabled: true,
-  weight: 0.35, // 35% of overall score
+  weight: 0.28, // 28% of overall score
   
   async calculate(context: RiskContext): Promise<RiskComponents> {
     const components: RiskComponents = {};
@@ -45,42 +46,56 @@ export const countryRiskSource: RiskSource = {
   },
 };
 
-// Activity risk source - assesses risk based on operational activity
-export const activityRiskSource: RiskSource = {
+// Operational Presence risk source - assesses risk based on operational status and fleet
+export const operationalPresenceRiskSource: RiskSource = {
   key: 'activity' as RiskDimensionKey,
-  name: 'Activity Risk',
-  description: 'Risk assessment based on airline\'s operational activity',
+  name: 'Operational Presence Risk',
+  description: 'Risk assessment based on airline\'s operational status and fleet presence',
   enabled: true,
-  weight: 0.25, // 25% of overall score
+  weight: 0.20, // 20% of overall score
   
   async calculate(context: RiskContext): Promise<RiskComponents> {
     const components: RiskComponents = {};
     
-    const flightsLast24h = context.activityData?.flightsLast24h ?? 0;
+    const isActive = context.airline.active;
+    const fleetSize = context.airline.fleetSize ?? 0;
     
-    // More flights = more active = lower risk
-    // Scale: 0 flights = 100 risk, 100+ flights = 0 risk
-    if (flightsLast24h === 0) {
-      components.activity = 100; // Very high risk if no flights
-    } else if (flightsLast24h < 10) {
-      components.activity = 70; // High risk for very low activity
-    } else if (flightsLast24h < 50) {
-      components.activity = normalizeScore(flightsLast24h, 10, 50, true);
+    // Operational Presence Risk scoring:
+    // - Inactive airline = very high risk (80)
+    // - Active + small fleet (<10) = high risk (60)
+    // - Active + fleet 10-50 = moderate risk (45)
+    // - Active + fleet >50 = low risk (30)
+    // - Active + fleet >200 = very low risk (20)
+    
+    let operationalRisk: number;
+    
+    if (!isActive) {
+      operationalRisk = 80; // Inactive = high risk
+    } else if (fleetSize === 0) {
+      operationalRisk = 70; // Active but no fleet data
+    } else if (fleetSize < 10) {
+      operationalRisk = 60; // Very small operator
+    } else if (fleetSize < 50) {
+      operationalRisk = 45; // Small to medium operator
+    } else if (fleetSize < 200) {
+      operationalRisk = 30; // Medium to large operator
     } else {
-      components.activity = normalizeScore(Math.min(flightsLast24h, 200), 50, 200, true);
+      operationalRisk = 20; // Major operator
     }
+    
+    components.activity = operationalRisk;
     
     return components;
   },
 };
 
-// Size and status risk source - assesses risk based on fleet size and active status
+// Fleet and status risk source - assesses risk based on fleet size and active status
 export const sizeAndStatusRiskSource: RiskSource = {
   key: 'size' as RiskDimensionKey,
-  name: 'Size & Status Risk',
+  name: 'Fleet & Status Risk',
   description: 'Risk assessment based on fleet size and operational status',
   enabled: true,
-  weight: 0.40, // 40% of overall score
+  weight: 0.32, // 32% of overall score
   
   async calculate(context: RiskContext): Promise<RiskComponents> {
     const components: RiskComponents = {};
@@ -116,9 +131,9 @@ export const sizeAndStatusRiskSource: RiskSource = {
 // Export all enabled sources for the aggregator
 export const enabledRiskSources: RiskSource[] = [
   countryRiskSource,
-  activityRiskSource,
+  operationalPresenceRiskSource, // Renamed from activityRiskSource
   sizeAndStatusRiskSource,
+  financialRiskSource, // NEW: Financial risk based on debt, profitability, liquidity
   // Future sources can be added here:
   // newsRiskSource,
-  // financialRiskSource,
 ];

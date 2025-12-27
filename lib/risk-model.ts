@@ -12,7 +12,7 @@ export type RiskBucket = 'Low' | 'Medium' | 'High';
 
 // Component scores from different risk dimensions (0-100 scale)
 export interface RiskComponents {
-  [key: string]: number;
+  [key: string]: number | any; // Allow metadata objects alongside numeric scores
 }
 
 // Context data for risk calculation
@@ -23,6 +23,7 @@ export interface RiskContext {
     country: string;
     active: boolean;
     fleetSize?: number;
+    ticker?: string; // Stock ticker for financial data
   };
   countryInfo?: {
     region?: string;
@@ -33,9 +34,18 @@ export interface RiskContext {
   activityData?: {
     flightsLast24h?: number;
   };
+  financialData?: {
+    available: boolean;
+    ticker?: string;
+    debtToEquity?: number;
+    profitMargin?: number;
+    cashToDebt?: number;
+    currency?: string;
+    fiscalYear?: string;
+    dataSource?: 'api' | 'mock' | 'none';
+  };
   // Future context fields
   newsData?: any;
-  financialData?: any;
 }
 
 // Interface for risk sources - pluggable architecture

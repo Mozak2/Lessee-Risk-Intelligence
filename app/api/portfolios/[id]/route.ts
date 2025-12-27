@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
-import { calculatePortfolioRisk } from '@/lib/risk-aggregator';
+import { calculatePortfolioRisk } from '@/lib/portfolio-risk';
 
 // GET /api/portfolios/[id] - Get portfolio details with risk
 export async function GET(
