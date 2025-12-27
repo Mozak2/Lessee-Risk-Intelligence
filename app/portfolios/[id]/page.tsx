@@ -3,6 +3,7 @@ import Link from 'next/link';
 import prisma from '@/lib/db';
 import { calculatePortfolioRisk } from '@/lib/portfolio-risk';
 import DeletePortfolioButton from './DeletePortfolioButton';
+import AddExposureForm from './AddExposureForm';
 
 async function getPortfolio(id: string) {
   try {
@@ -192,18 +193,15 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
         </div>
       )}
 
+      {/* Add Exposure Form */}
+      <div className="mb-6">
+        <AddExposureForm portfolioId={portfolio.id} />
+      </div>
+
       {/* Exposures List */}
       <div className="bg-white shadow sm:rounded-lg">
         <div className="px-4 py-5 sm:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">Lease Exposures</h3>
-            <Link
-              href={`/portfolios/${portfolio.id}/add-exposure`}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-            >
-              Add Exposure
-            </Link>
-          </div>
+          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Lease Exposures</h3>
 
           {portfolio.exposures.length === 0 ? (
             <div className="text-center py-8">
