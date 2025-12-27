@@ -80,17 +80,17 @@ export interface RiskResult {
 export interface RiskConfig {
   cacheDurationMinutes: number;
   bucketThresholds: {
-    lowMax: number;    // 0-30 = Low
-    mediumMax: number; // 31-60 = Medium
-                       // 61-100 = High
+    lowMax: number;    // 0-40 = Low
+    mediumMax: number; // 40-70 = Medium
+                       // 70-100 = High
   };
 }
 
 export const DEFAULT_RISK_CONFIG: RiskConfig = {
   cacheDurationMinutes: 60, // Cache risk scores for 1 hour
   bucketThresholds: {
-    lowMax: 30,
-    mediumMax: 60,
+    lowMax: 40,
+    mediumMax: 70,
   },
 };
 

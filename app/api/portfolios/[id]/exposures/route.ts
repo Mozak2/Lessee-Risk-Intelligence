@@ -74,11 +74,10 @@ export async function POST(
       await getOrCalculateAirlineRisk({
         airline: {
           icao: airline.icao,
-          iata: airline.iata,
           name: airline.name,
           country: airline.country,
           active: airline.active,
-          fleetSize: airline.fleetSize,
+          fleetSize: airline.fleetSize ?? undefined,
         },
       });
     } catch (error) {

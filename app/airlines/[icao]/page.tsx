@@ -75,8 +75,8 @@ function getRiskBucketColor(bucket: string) {
 }
 
 function getScoreColor(score: number) {
-  if (score <= 30) return 'text-green-600';
-  if (score <= 60) return 'text-yellow-600';
+  if (score < 40) return 'text-green-600';
+  if (score < 70) return 'text-yellow-600';
   return 'text-red-600';
 }
 
@@ -171,10 +171,13 @@ export default async function AirlinePage({ params }: { params: { icao: string }
                     {component.score <= 10 && (
                       <span className="text-xs text-green-700 font-medium">Excellent</span>
                     )}
-                    {component.score > 10 && component.score <= 30 && (
+                    {component.score > 10 && component.score < 40 && (
                       <span className="text-xs text-green-600 font-medium">Good</span>
                     )}
-                    {component.score > 60 && component.score <= 80 && (
+                    {component.score >= 40 && component.score < 70 && (
+                      <span className="text-xs text-yellow-600 font-medium">Medium</span>
+                    )}
+                    {component.score >= 70 && component.score <= 80 && (
                       <span className="text-xs text-red-600 font-medium">Concern</span>
                     )}
                     {component.score > 80 && (
@@ -185,9 +188,9 @@ export default async function AirlinePage({ params }: { params: { icao: string }
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
                   <div
                     className={`h-2.5 rounded-full ${
-                      component.score <= 30
+                      component.score < 40
                         ? 'bg-green-600'
-                        : component.score <= 60
+                        : component.score < 70
                         ? 'bg-yellow-600'
                         : 'bg-red-600'
                     }`}

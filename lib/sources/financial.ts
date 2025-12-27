@@ -157,11 +157,11 @@ export function computeFinancialRisk(fundamentals: FinancialFundamentals): numbe
  * Helper function to explain financial risk level
  */
 export function getFinancialRiskDescription(score: number): string {
-  if (score <= 30) {
+  if (score < 40) {
     return 'Strong financial position with healthy debt levels and profitability';
-  } else if (score <= 50) {
+  } else if (score < 50) {
     return 'Moderate financial health with manageable debt';
-  } else if (score <= 70) {
+  } else if (score < 70) {
     return 'Financial concerns present; elevated debt or profitability issues';
   } else {
     return 'Significant financial stress; high debt burden or operating losses';

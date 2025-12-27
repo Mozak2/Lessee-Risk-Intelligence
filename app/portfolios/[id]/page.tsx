@@ -37,11 +37,10 @@ async function getPortfolio(id: string) {
           await getOrCalculateAirlineRisk({
             airline: {
               icao: exposure.airline.icao,
-              iata: exposure.airline.iata,
               name: exposure.airline.name,
               country: exposure.airline.country,
               active: exposure.airline.active,
-              fleetSize: exposure.airline.fleetSize,
+              fleetSize: exposure.airline.fleetSize ?? undefined,
             },
           });
         } catch (error) {
@@ -68,6 +67,10 @@ async function getPortfolio(id: string) {
         },
       },
     });
+
+    if (!updatedPortfolio) {
+      return null;
+    }
     
     // Calculate portfolio-level risk
     const portfolioRisk = await calculatePortfolioRisk(id);
@@ -96,8 +99,8 @@ function getRiskBucketColor(bucket: string) {
 }
 
 function getScoreColor(score: number) {
-  if (score <= 30) return 'text-green-600';
-  if (score <= 60) return 'text-yellow-600';
+  if (score < 40) return 'text-green-600';
+  if (score < 70) return 'text-yellow-600';
   return 'text-red-600';
 }
 
@@ -136,7 +139,7 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
         <div className="bg-white shadow sm:rounded-lg mb-6">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Portfolio Risk Summary</h3>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-4">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-5">
               <div>
                 <dt className="text-sm font-medium text-gray-500">Total Exposure</dt>
                 <dd className="mt-1 text-2xl font-semibold text-gray-900">
@@ -145,11 +148,21 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                 <dd className="text-xs text-gray-500">{risk.currency}</dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-gray-500">Portfolio Risk</dt>
-                <dd className={`mt-1 text-2xl font-semibold ${getScoreColor(risk.portfolioRisk)}`}>
-                  {risk.portfolioRisk}
+                <dt className="text-sm font-medium text-gray-500">Base Risk</dt>
+                <dd className={`mt-1 text-2xl font-semibold ${getScoreColor(risk.baseRisk)}`}>
+                  {risk.baseRisk}
                 </dd>
                 <dd className="text-xs text-gray-500">Weighted Average</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Adjusted Risk</dt>
+                <dd className={`mt-1 text-2xl font-semibold ${getScoreColor(risk.adjustedRisk)}`}>
+                  {risk.adjustedRisk}
+                  {risk.concentrationPenalty > 0 && (
+                    <span className="text-sm text-red-500 ml-1">+{risk.concentrationPenalty}</span>
+                  )}
+                </dd>
+                <dd className="text-xs text-gray-500">Final Score</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Risk Bucket</dt>
@@ -168,6 +181,14 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                 <dd className="mt-1 text-2xl font-semibold text-gray-900">{risk.topExposures.length}</dd>
               </div>
             </div>
+
+            {risk.concentrationPenalty > 0 && (
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-800">
+                  <span className="font-semibold">Concentration Risk:</span> Adjusted for concentration: {(risk.maxConcentration * 100).toFixed(1)}% exposure to a single airline (+{risk.concentrationPenalty} penalty).
+                </p>
+              </div>
+            )}
 
             <div className="mt-6">
               <h4 className="text-sm font-medium text-gray-700 mb-3">Exposure by Risk Bucket</h4>
