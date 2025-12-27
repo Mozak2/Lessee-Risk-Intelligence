@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import prisma from '@/lib/db';
+import PortfolioCard from './PortfolioCard';
 
 async function getPortfolios() {
   try {
@@ -90,33 +91,7 @@ export default async function PortfoliosPage() {
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {portfolios.map((portfolio: any) => (
-              <Link
-                key={portfolio.id}
-                href={`/portfolios/${portfolio.id}`}
-                className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow"
-              >
-                <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900 truncate">{portfolio.name}</h3>
-                  {portfolio.description && (
-                    <p className="mt-1 text-sm text-gray-500 line-clamp-2">{portfolio.description}</p>
-                  )}
-                  <div className="mt-4 space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Airlines</span>
-                      <span className="font-medium text-gray-900">{portfolio.numAirlines}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Total Exposure</span>
-                      <span className="font-medium text-gray-900">
-                        ${(portfolio.totalExposure / 1000000).toFixed(1)}M
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <span className="text-sm font-medium text-blue-600">View details →</span>
-                  </div>
-                </div>
-              </Link>
+              <PortfolioCard key={portfolio.id} portfolio={portfolio} />
             ))}
           </div>
         )}

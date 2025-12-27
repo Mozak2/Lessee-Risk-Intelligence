@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import prisma from '@/lib/db';
 import { calculatePortfolioRisk } from '@/lib/portfolio-risk';
+import DeletePortfolioButton from './DeletePortfolioButton';
 
 async function getPortfolio(id: string) {
   try {
@@ -78,11 +79,14 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
 
       {/* Portfolio Header */}
       <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
-        <div className="px-4 py-5 sm:px-6">
-          <h1 className="text-3xl font-bold text-gray-900">{portfolio.name}</h1>
-          {portfolio.description && (
-            <p className="mt-1 text-sm text-gray-500">{portfolio.description}</p>
-          )}
+        <div className="px-4 py-5 sm:px-6 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">{portfolio.name}</h1>
+            {portfolio.description && (
+              <p className="mt-1 text-sm text-gray-500">{portfolio.description}</p>
+            )}
+          </div>
+          <DeletePortfolioButton portfolioId={portfolio.id} portfolioName={portfolio.name} />
         </div>
       </div>
 
