@@ -4,6 +4,7 @@ import prisma from '@/lib/db';
 import { calculatePortfolioRisk } from '@/lib/portfolio-risk';
 import DeletePortfolioButton from './DeletePortfolioButton';
 import AddExposureForm from './AddExposureForm';
+import { getOrCalculateAirlineRisk } from '@/lib/risk-cache';
 
 async function getPortfolio(id: string) {
   try {
@@ -29,11 +30,50 @@ async function getPortfolio(id: string) {
       return null;
     }
     
+    // Calculate risk for any airlines without snapshots
+    for (const exposure of portfolio.exposures) {
+      if (!exposure.airline.riskSnapshots || exposure.airline.riskSnapshots.length === 0) {
+        try {
+          await getOrCalculateAirlineRisk({
+            airline: {
+              icao: exposure.airline.icao,
+              iata: exposure.airline.iata,
+              name: exposure.airline.name,
+              country: exposure.airline.country,
+              active: exposure.airline.active,
+              fleetSize: exposure.airline.fleetSize,
+            },
+          });
+        } catch (error) {
+          console.error(`Error calculating risk for ${exposure.airline.icao}:`, error);
+        }
+      }
+    }
+    
+    // Re-fetch portfolio with updated snapshots
+    const updatedPortfolio = await prisma.portfolio.findUnique({
+      where: { id },
+      include: {
+        exposures: {
+          include: {
+            airline: {
+              include: {
+                riskSnapshots: {
+                  orderBy: { calculatedAt: 'desc' },
+                  take: 1,
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    
     // Calculate portfolio-level risk
     const portfolioRisk = await calculatePortfolioRisk(id);
     
     return {
-      portfolio,
+      portfolio: updatedPortfolio,
       risk: portfolioRisk,
     };
   } catch (error) {
