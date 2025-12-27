@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { getAirlineByIcao } from '@/lib/sources/aviation';
+import { getOrCalculateAirlineRisk } from '@/lib/risk-cache';
 
 // POST /api/portfolios/[id]/exposures - Add exposure to portfolio
 export async function POST(
@@ -66,6 +67,23 @@ export async function POST(
         },
       });
       console.log('Created new airline:', airline.icao);
+    }
+    
+    // Calculate and cache risk for the airline if not already done
+    try {
+      await getOrCalculateAirlineRisk({
+        airline: {
+          icao: airline.icao,
+          iata: airline.iata,
+          name: airline.name,
+          country: airline.country,
+          active: airline.active,
+          fleetSize: airline.fleetSize,
+        },
+      });
+    } catch (error) {
+      console.error('Error calculating airline risk:', error);
+      // Continue even if risk calculation fails
     }
     
     // Create exposure

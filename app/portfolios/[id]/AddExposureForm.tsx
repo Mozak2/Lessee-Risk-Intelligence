@@ -140,33 +140,39 @@ export default function AddExposureForm({ portfolioId }: AddExposureFormProps) {
           <label htmlFor="exposureAmount" className="block text-sm font-medium text-gray-700">
             Exposure Amount *
           </label>
-          <div className="mt-1 relative rounded-md shadow-sm">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="text-gray-500 sm:text-sm">$</span>
+          <div className="mt-1 flex rounded-md shadow-sm">
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span className="text-gray-500 sm:text-sm">$</span>
+              </div>
+              <input
+                type="text"
+                id="exposureAmount"
+                required
+                placeholder="0.00"
+                value={formData.exposureAmount ? parseFloat(formData.exposureAmount.replace(/,/g, '')).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : ''}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/,/g, '');
+                  if (value === '' || !isNaN(parseFloat(value))) {
+                    setFormData({ ...formData, exposureAmount: value });
+                  }
+                }}
+                className="block w-full pl-7 pr-3 rounded-l-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+              />
             </div>
-            <input
-              type="number"
-              id="exposureAmount"
-              required
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-              value={formData.exposureAmount}
-              onChange={(e) => setFormData({ ...formData, exposureAmount: e.target.value })}
-              className="block w-full pl-7 pr-12 rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-            />
-            <div className="absolute inset-y-0 right-0 flex items-center">
-              <select
-                value={formData.currency}
-                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                className="h-full rounded-md border-transparent bg-transparent py-0 pl-2 pr-7 text-gray-500 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              >
-                <option>USD</option>
-                <option>EUR</option>
-                <option>GBP</option>
-              </select>
-            </div>
+            <select
+              value={formData.currency}
+              onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+              className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-700 font-semibold sm:text-sm focus:border-blue-500 focus:ring-blue-500 cursor-pointer"
+            >
+              <option>USD</option>
+              <option>EUR</option>
+              <option>GBP</option>
+            </select>
           </div>
+          <p className="mt-1 text-xs text-gray-500">
+            Example: 5,000,000 for $5M
+          </p>
         </div>
 
         <div>
