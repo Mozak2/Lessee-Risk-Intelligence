@@ -123,7 +123,7 @@ export default function PortfolioCard({ portfolio }: PortfolioCardProps) {
             </div>
           </div>
           
-          <div className="mt-4">
+          <div className="mt-4 flex items-center">
             <span className="text-sm font-medium text-blue-600">View details →</span>
           </div>
         </div>

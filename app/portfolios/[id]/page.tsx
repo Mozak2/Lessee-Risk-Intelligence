@@ -173,25 +173,29 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                       
                       <div className="grid grid-cols-1 gap-5 sm:grid-cols-4 mb-4">
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">Base Risk</dt>
-                          <dd className={`mt-1 text-2xl font-semibold ${getScoreColor(currencyData.baseRisk)}`}>
+                          <div className="text-sm font-medium text-gray-500" title="Exposure-weighted average of airline risk scores">
+                            Base Risk (Weighted Average)
+                          </div>
+                          <div className={`mt-1 text-2xl font-semibold ${getScoreColor(currencyData.baseRisk)}`}>
                             {currencyData.baseRisk}
-                          </dd>
-                          <dd className="text-xs text-gray-500">Weighted Avg</dd>
+                          </div>
                         </div>
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">Adjusted Risk</dt>
-                          <dd className={`mt-1 text-2xl font-semibold ${getScoreColor(currencyData.adjustedRisk)}`}>
+                          <div className="text-sm font-medium text-gray-500" title="Base risk adjusted for portfolio concentration">
+                            Adjusted Risk (Concentration Applied)
+                          </div>
+                          <div className={`mt-1 text-2xl font-semibold ${getScoreColor(currencyData.adjustedRisk)}`}>
                             {currencyData.adjustedRisk}
                             {currencyData.concentrationPenalty > 0 && (
                               <span className="text-sm text-red-500 ml-1">+{currencyData.concentrationPenalty}</span>
                             )}
-                          </dd>
-                          <dd className="text-xs text-gray-500">Final Score</dd>
+                          </div>
                         </div>
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">Risk Bucket</dt>
-                          <dd className="mt-1">
+                          <div className="text-sm font-medium text-gray-500" title="Categorizes risk as Low / Medium / High">
+                            Risk Bucket
+                          </div>
+                          <div className="mt-1">
                             <span
                               className={`px-3 py-1 inline-flex text-sm font-semibold rounded-full ${getRiskBucketColor(
                                 currencyData.riskBucket
@@ -199,11 +203,11 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                             >
                               {currencyData.riskBucket}
                             </span>
-                          </dd>
+                          </div>
                         </div>
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">Airlines</dt>
-                          <dd className="mt-1 text-2xl font-semibold text-gray-900">{currencyData.rows.length}</dd>
+                          <div className="text-sm font-medium text-gray-500">Airlines</div>
+                          <div className="mt-1 text-2xl font-semibold text-gray-900">{currencyData.rows.length}</div>
                         </div>
                       </div>
 
@@ -211,18 +215,17 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                       <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
                         <h5 className="text-sm font-semibold text-blue-900 mb-2">Risk Calculation</h5>
                         <ul className="text-xs text-blue-800 space-y-1">
-                          <li><strong>Base Risk</strong> represents the exposure-weighted average of individual airline risk scores.</li>
-                          <li><strong>Adjusted Risk</strong> is the base risk {currencyData.concentrationPenalty > 0 ? `plus a +${currencyData.concentrationPenalty} concentration penalty` : 'with no concentration adjustment applied'}.</li>
+                          <li><strong>Base Risk (Weighted Average)</strong> represents the exposure-weighted average of individual airline risk scores.</li>
+                          <li><strong>Adjusted Risk (Concentration Applied)</strong> is the base risk {currencyData.concentrationPenalty > 0 ? `plus a +${currencyData.concentrationPenalty} concentration penalty` : 'with no concentration adjustment applied'}.</li>
                           {currencyData.concentrationPenalty > 0 ? (
                             <li className="text-yellow-700"><strong>Concentration penalty applied:</strong> {(currencyData.maxConcentration * 100).toFixed(1)}% of exposure is held with a single airline.</li>
                           ) : (
-                            <li className="text-green-700"><strong>Portfolio is diversified</strong> across airlines. No concentration adjustment needed.</li>
+                            <li className="text-green-700"><strong>No concentration penalty applied.</strong> Exposure is diversified across airlines.</li>
                           )}
-                          <li className="text-gray-600 italic mt-2">Exposure is grouped by currency. FX conversion is not applied.</li>
+                          <li className="text-gray-600 italic mt-2"><strong>Note:</strong> Exposure is grouped by currency. FX conversion is not applied.</li>
                         </ul>
                       </div>
 
-                      {/* Buckets for this currency */}
                       <div className="mt-4">
                         <h5 className="text-sm font-medium text-gray-700 mb-3">Exposure by Risk Bucket ({currency})</h5>
                         <div className="grid grid-cols-3 gap-4">
@@ -260,7 +263,7 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                 })}
 
                 <div className="text-xs text-gray-500 italic mt-4 p-3 bg-gray-50 rounded">
-                  Note: Exposure is shown by currency. FX conversion is not applied in this MVP.
+                  <strong>Note:</strong> Exposure is shown by currency. FX conversion is not applied in this MVP.
                 </div>
               </div>
             ) : (
@@ -268,32 +271,36 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
               <>
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-5">
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Total Exposure</dt>
-                    <dd className="mt-1 text-2xl font-semibold text-gray-900">
+                    <div className="text-sm font-medium text-gray-500">Total Exposure</div>
+                    <div className="mt-1 text-2xl font-semibold text-gray-900">
                       {getCurrencySymbol(risk.currency)}{(risk.totalExposure / 1000000).toFixed(1)}M
-                    </dd>
-                    <dd className="text-xs text-gray-500">{risk.currency}</dd>
+                    </div>
+                    <div className="text-xs text-gray-500">{risk.currency}</div>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Base Risk</dt>
-                    <dd className={`mt-1 text-2xl font-semibold ${getScoreColor(risk.baseRisk)}`}>
+                    <div className="text-sm font-medium text-gray-500" title="Exposure-weighted average of airline risk scores">
+                      Base Risk (Weighted Average)
+                    </div>
+                    <div className={`mt-1 text-2xl font-semibold ${getScoreColor(risk.baseRisk)}`}>
                       {risk.baseRisk}
-                    </dd>
-                    <dd className="text-xs text-gray-500">Weighted Avg</dd>
+                    </div>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Adjusted Risk</dt>
-                    <dd className={`mt-1 text-2xl font-semibold ${getScoreColor(risk.adjustedRisk)}`}>
+                    <div className="text-sm font-medium text-gray-500" title="Base risk adjusted for portfolio concentration">
+                      Adjusted Risk (Concentration Applied)
+                    </div>
+                    <div className={`mt-1 text-2xl font-semibold ${getScoreColor(risk.adjustedRisk)}`}>
                       {risk.adjustedRisk}
                       {risk.concentrationPenalty > 0 && (
                         <span className="text-sm text-red-500 ml-1">+{risk.concentrationPenalty}</span>
                       )}
-                    </dd>
-                    <dd className="text-xs text-gray-500">Final Score</dd>
+                    </div>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Risk Bucket</dt>
-                    <dd className="mt-1">
+                    <div className="text-sm font-medium text-gray-500" title="Categorizes risk as Low / Medium / High">
+                      Risk Bucket
+                    </div>
+                    <div className="mt-1">
                       <span
                         className={`px-3 py-1 inline-flex text-sm font-semibold rounded-full ${getRiskBucketColor(
                           risk.riskBucket
@@ -301,11 +308,11 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                       >
                         {risk.riskBucket}
                       </span>
-                    </dd>
+                    </div>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Airlines</dt>
-                    <dd className="mt-1 text-2xl font-semibold text-gray-900">{risk.topExposures.length}</dd>
+                    <div className="text-sm font-medium text-gray-500">Airlines</div>
+                    <div className="mt-1 text-2xl font-semibold text-gray-900">{risk.topExposures.length}</div>
                   </div>
                 </div>
 
@@ -313,12 +320,12 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                 <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
                   <h5 className="text-sm font-semibold text-blue-900 mb-2">Risk Calculation</h5>
                   <ul className="text-xs text-blue-800 space-y-1">
-                    <li><strong>Base Risk</strong> represents the exposure-weighted average of individual airline risk scores.</li>
-                    <li><strong>Adjusted Risk</strong> is the base risk {risk.concentrationPenalty > 0 ? `plus a +${risk.concentrationPenalty} concentration penalty` : 'with no concentration adjustment applied'}.</li>
+                    <li><strong>Base Risk (Weighted Average)</strong> represents the exposure-weighted average of individual airline risk scores.</li>
+                    <li><strong>Adjusted Risk (Concentration Applied)</strong> is the base risk {risk.concentrationPenalty > 0 ? `plus a +${risk.concentrationPenalty} concentration penalty` : 'with no concentration adjustment applied'}.</li>
                     {risk.concentrationPenalty > 0 ? (
                       <li className="text-yellow-700"><strong>Concentration penalty applied:</strong> {(risk.maxConcentration * 100).toFixed(1)}% of exposure is held with a single airline.</li>
                     ) : (
-                      <li className="text-green-700"><strong>Portfolio is diversified</strong> across airlines. No concentration adjustment needed.</li>
+                      <li className="text-green-700"><strong>No concentration penalty applied.</strong> Exposure is diversified across airlines.</li>
                     )}
                   </ul>
                 </div>
@@ -374,7 +381,7 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
         <div className="px-4 py-5 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg leading-6 font-medium text-gray-900">Lease Exposures</h3>
-            <p className="text-xs text-gray-500 italic">Risk scores are based on airline fundamentals and operational indicators</p>
+            <p className="text-xs text-gray-500 italic" title="Derived from airline operational, country, and financial indicators">Sorted by exposure amount (highest first)</p>
           </div>
 
           {portfolio.exposures.length === 0 ? (
@@ -395,7 +402,7 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Aircraft
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" title="Derived from airline operational, country, and financial indicators">
                       Risk Score
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -495,20 +502,20 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
             <h4 className="text-sm font-semibold text-gray-900 mt-0 mb-2">Methodology Overview</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <strong>Airline Risk Scores</strong> are calculated from publicly available data including financial metrics, operational indicators, fleet size, and country risk factors. Scores range from 0 (lowest risk) to 100 (highest risk).
+                <strong>Airline Risk Scores</strong> are derived from public operational and financial indicators. Scores range from 0 (lowest risk) to 100 (highest risk).
               </li>
               <li>
-                <strong>Portfolio Base Risk</strong> is the exposure-weighted average of individual airline risk scores. Airlines with larger exposures have proportionally greater impact on the portfolio score.
+                <strong>Portfolio Base Risk (Weighted Average)</strong> is calculated as a weighted average based on exposure size. Airlines with larger exposures have proportionally greater impact on the portfolio score.
               </li>
               <li>
-                <strong>Concentration Penalties</strong> are applied when exposure is heavily concentrated:
+                <strong>Concentration Penalties</strong> are applied when a large share of exposure is allocated to a single airline:
                 <ul className="mt-1 ml-4 text-xs">
                   <li>+5 points if a single airline represents &gt;50% of portfolio exposure</li>
                   <li>+10 points if a single airline represents &gt;70% of portfolio exposure</li>
                 </ul>
               </li>
               <li>
-                <strong>Multi-Currency Handling</strong>: Each currency group (USD, EUR, GBP, etc.) is analyzed separately. Risk and concentration metrics are calculated independently per currency. No FX conversion is applied.
+                <strong>Multi-Currency Risk Calculation</strong>: Risk is calculated separately per currency. Each currency group (USD, EUR, GBP, etc.) is analyzed independently. FX conversion is intentionally excluded in this MVP.
               </li>
               <li>
                 <strong>Risk Buckets</strong> categorize adjusted risk scores:

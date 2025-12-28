@@ -196,7 +196,7 @@ export default function AddExposureForm({ portfolioId }: AddExposureFormProps) {
             <button
               type="button"
               onClick={() => setShowDropdown(!showDropdown)}
-              className="absolute inset-y-0 right-0 flex items-center pr-2"
+              className="absolute inset-y-0 right-0 flex items-center justify-center pr-3"
             >
               <svg
                 className="h-5 w-5 text-gray-400"
