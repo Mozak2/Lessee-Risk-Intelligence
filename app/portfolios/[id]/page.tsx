@@ -4,6 +4,7 @@ import prisma from '@/lib/db';
 import { calculatePortfolioRisk } from '@/lib/portfolio-risk';
 import DeletePortfolioButton from './DeletePortfolioButton';
 import AddExposureForm from './AddExposureForm';
+import EmptyState from './EmptyState';
 import { getOrCalculateAirlineRisk } from '@/lib/risk-cache';
 
 async function getPortfolio(id: string) {
@@ -227,35 +228,10 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
       )}
 
       {/* Empty state for portfolios without exposures */}
-      {portfolio.exposures.length === 0 && (
-        <div className="bg-white shadow sm:rounded-lg mb-6">
-          <div className="px-4 py-12 text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No exposures yet</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Add airlines to this portfolio to start tracking risk.
-            </p>
-            <p className="mt-2 text-xs text-gray-400">
-              Search for airlines by ICAO code (e.g., AAL, UAL, DAL)
-            </p>
-          </div>
-        </div>
-      )}
+      {portfolio.exposures.length === 0 && <EmptyState />}
 
       {/* Add Exposure Form */}
-      <div className="mb-6">
+      <div className="mb-6" id="add-exposure-form">
         <AddExposureForm portfolioId={portfolio.id} />
       </div>
 
