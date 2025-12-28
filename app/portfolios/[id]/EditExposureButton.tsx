@@ -83,7 +83,7 @@ function EditExposureModal({ portfolioId, exposure, onClose }: EditExposureModal
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          exposureAmount: parseFloat(formData.exposureAmount),
+          exposureAmount: parseFloat(formData.exposureAmount.replace(/,/g, '')),
           currency: formData.currency,
           numAircraft: formData.numAircraft ? parseInt(formData.numAircraft) : null,
         }),
@@ -122,12 +122,16 @@ function EditExposureModal({ portfolioId, exposure, onClose }: EditExposureModal
               Exposure Amount *
             </label>
             <input
-              type="number"
+              type="text"
               id="exposureAmount"
               required
-              step="0.01"
-              value={formData.exposureAmount}
-              onChange={(e) => setFormData({ ...formData, exposureAmount: e.target.value })}
+              value={formData.exposureAmount ? Number(formData.exposureAmount).toLocaleString('en-US') : ''}
+              onChange={(e) => {
+                const value = e.target.value.replace(/,/g, '');
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                  setFormData({ ...formData, exposureAmount: value });
+                }
+              }}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
             />
           </div>

@@ -254,15 +254,16 @@ export default function AddExposureForm({ portfolioId }: AddExposureFormProps) {
                 type="text"
                 id="exposureAmount"
                 required
-                placeholder="0.00"
-                value={formData.exposureAmount ? parseFloat(formData.exposureAmount.replace(/,/g, '')).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : ''}
+                placeholder="0"
+                value={formData.exposureAmount ? Number(formData.exposureAmount).toLocaleString('en-US') : ''}
                 onChange={(e) => {
                   const value = e.target.value.replace(/,/g, '');
-                  if (value === '' || !isNaN(parseFloat(value))) {
+                  // Allow empty string or valid numbers (including partial inputs like "123.")
+                  if (value === '' || /^\d*\.?\d*$/.test(value)) {
                     setFormData({ ...formData, exposureAmount: value });
                   }
                 }}
-                className="block w-full pl-7 pr-3 rounded-l-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+                className="block w-full pl-7 pr-3 rounded-l-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
               />
             </div>
             <select

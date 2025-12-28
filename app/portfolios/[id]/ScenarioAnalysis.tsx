@@ -180,12 +180,15 @@ export default function ScenarioAnalysis({
                     <span className="text-gray-500 dark:text-gray-400 sm:text-sm">{getCurrencySymbol(currency)}</span>
                   </div>
                   <input
-                    type="number"
-                    value={newExposure}
-                    onChange={(e) => setNewExposure(e.target.value)}
+                    type="text"
+                    value={newExposure ? Number(newExposure).toLocaleString('en-US') : ''}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/,/g, '');
+                      if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                        setNewExposure(value);
+                      }
+                    }}
                     placeholder="0"
-                    min="0"
-                    step="1000"
                     className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm pl-8 py-2 border"
                   />
                 </div>
