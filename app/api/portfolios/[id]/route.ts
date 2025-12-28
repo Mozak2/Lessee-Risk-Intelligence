@@ -59,16 +59,37 @@ export async function PUT(
   try {
     const body = await request.json();
     const { name, description } = body;
-    
-    const portfolio = await prisma.portfolio.update({
+
+    // Validation
+    if (!name || name.trim() === '') {
+      return NextResponse.json(
+        { error: 'Portfolio name is required' },
+        { status: 400 }
+      );
+    }
+
+    // Check if portfolio exists
+    const existingPortfolio = await prisma.portfolio.findUnique({
+      where: { id: params.id },
+    });
+
+    if (!existingPortfolio) {
+      return NextResponse.json(
+        { error: 'Portfolio not found' },
+        { status: 404 }
+      );
+    }
+
+    // Update portfolio
+    const updatedPortfolio = await prisma.portfolio.update({
       where: { id: params.id },
       data: {
-        name,
-        description,
+        name: name.trim(),
+        description: description?.trim() || null,
       },
     });
-    
-    return NextResponse.json({ portfolio });
+
+    return NextResponse.json(updatedPortfolio);
   } catch (error) {
     console.error('Error updating portfolio:', error);
     return NextResponse.json(

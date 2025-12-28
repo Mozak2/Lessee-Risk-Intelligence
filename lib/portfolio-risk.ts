@@ -2,13 +2,40 @@
 
 import prisma from './db';
 
-export interface PortfolioRiskResult {
+export interface CurrencyRiskResult {
   totalExposure: number;
   baseRisk: number;
   adjustedRisk: number;
-  portfolioRisk: number; // Keep for backward compatibility (same as adjustedRisk)
   concentrationPenalty: number;
   maxConcentration: number; // As decimal (0-1)
+  riskBucket: 'Low' | 'Medium' | 'High';
+  buckets: {
+    low: number;
+    medium: number;
+    high: number;
+  };
+  rows: Array<{
+    airline: {
+      icao: string;
+      name: string;
+      country: string;
+    };
+    exposure: number;
+    risk: number;
+    riskBucket: string;
+  }>;
+}
+
+export interface PortfolioRiskResult {
+  perCurrency: Record<string, CurrencyRiskResult>;
+  currencies: string[];
+  // Legacy fields for backward compatibility (uses first currency if single-currency portfolio)
+  totalExposure: number;
+  baseRisk: number;
+  adjustedRisk: number;
+  portfolioRisk: number;
+  concentrationPenalty: number;
+  maxConcentration: number;
   riskBucket: 'Low' | 'Medium' | 'High';
   buckets: {
     low: number;
@@ -30,8 +57,7 @@ export interface PortfolioRiskResult {
 
 /**
  * Calculate portfolio-level risk from airline exposures
- * 
- * Formula: portfolioRisk = sum(exposure * airlineRisk) / sum(exposure)
+ * Supports multi-currency portfolios by calculating risk per currency
  */
 export async function calculatePortfolioRisk(
   portfolioId: string
@@ -60,6 +86,8 @@ export async function calculatePortfolioRisk(
 
   if (portfolio.exposures.length === 0) {
     return {
+      perCurrency: {},
+      currencies: [],
       totalExposure: 0,
       baseRisk: 0,
       adjustedRisk: 0,
@@ -73,105 +101,138 @@ export async function calculatePortfolioRisk(
     };
   }
 
-  let totalExposure = 0;
-  let weightedRiskSum = 0;
-  const buckets = { low: 0, medium: 0, high: 0 };
-  const exposuresWithRisk: Array<{
-    airline: { icao: string; name: string; country: string };
-    exposure: number;
-    risk: number;
-    riskBucket: string;
-  }> = [];
-
-  // Determine primary currency (most common in exposures)
-  const currencies = portfolio.exposures.map((e) => e.currency);
-  const primaryCurrency =
-    currencies.find((c, i, arr) => arr.filter((x) => x === c).length > arr.length / 2) ||
-    currencies[0] ||
-    'USD';
-
+  // Group exposures by currency
+  const exposuresByCurrency = new Map<string, typeof portfolio.exposures>();
   for (const exposure of portfolio.exposures) {
-    const amount = exposure.exposureAmount;
-    totalExposure += amount;
+    const currency = exposure.currency || 'USD';
+    if (!exposuresByCurrency.has(currency)) {
+      exposuresByCurrency.set(currency, []);
+    }
+    exposuresByCurrency.get(currency)!.push(exposure);
+  }
 
-    // Get latest risk snapshot for airline
-    const latestSnapshot = exposure.airline.riskSnapshots[0];
-    let airlineRisk = 50; // Default moderate risk if no snapshot
-    let riskBucket = 'Medium';
+  const currencies = Array.from(exposuresByCurrency.keys()).sort();
+  const perCurrency: Record<string, CurrencyRiskResult> = {};
 
-    if (latestSnapshot) {
-      airlineRisk = latestSnapshot.overallScore;
-      riskBucket = latestSnapshot.riskBucket;
+  // Calculate risk for each currency group
+  for (const [currency, exposures] of exposuresByCurrency.entries()) {
+    let totalExposure = 0;
+    let weightedRiskSum = 0;
+    const buckets = { low: 0, medium: 0, high: 0 };
+    const rows: Array<{
+      airline: { icao: string; name: string; country: string };
+      exposure: number;
+      risk: number;
+      riskBucket: string;
+    }> = [];
+
+    for (const exposure of exposures) {
+      const amount = exposure.exposureAmount;
+      totalExposure += amount;
+
+      // Get latest risk snapshot for airline
+      const latestSnapshot = exposure.airline.riskSnapshots[0];
+      let airlineRisk = 50; // Default moderate risk if no snapshot
+      let riskBucket = 'Medium';
+
+      if (latestSnapshot) {
+        airlineRisk = latestSnapshot.overallScore;
+        riskBucket = latestSnapshot.riskBucket;
+      }
+
+      // Calculate weighted risk contribution
+      weightedRiskSum += amount * airlineRisk;
+
+      // Group by risk bucket
+      if (riskBucket === 'Low') {
+        buckets.low += amount;
+      } else if (riskBucket === 'Medium') {
+        buckets.medium += amount;
+      } else {
+        buckets.high += amount;
+      }
+
+      rows.push({
+        airline: {
+          icao: exposure.airline.icao,
+          name: exposure.airline.name,
+          country: exposure.airline.country,
+        },
+        exposure: amount,
+        risk: airlineRisk,
+        riskBucket,
+      });
     }
 
-    // Calculate weighted risk contribution
-    weightedRiskSum += amount * airlineRisk;
+    // Calculate base risk (exposure-weighted average)
+    const baseRisk = totalExposure > 0 ? weightedRiskSum / totalExposure : 0;
 
-    // Group by risk bucket
-    if (riskBucket === 'Low') {
-      buckets.low += amount;
-    } else if (riskBucket === 'Medium') {
-      buckets.medium += amount;
-    } else {
-      buckets.high += amount;
+    // Calculate concentration penalty within this currency
+    const maxExposureAmount = Math.max(...rows.map(r => r.exposure));
+    const maxConcentration = totalExposure > 0 ? maxExposureAmount / totalExposure : 0;
+    
+    let concentrationPenalty = 0;
+    if (maxConcentration > 0.7) {
+      concentrationPenalty = 10;
+    } else if (maxConcentration > 0.5) {
+      concentrationPenalty = 5;
     }
 
-    exposuresWithRisk.push({
-      airline: {
-        icao: exposure.airline.icao,
-        name: exposure.airline.name,
-        country: exposure.airline.country,
+    // Calculate adjusted risk (clamped at 100)
+    const adjustedRisk = Math.min(100, baseRisk + concentrationPenalty);
+
+    // Determine risk bucket based on adjusted risk
+    let portfolioRiskBucket: 'Low' | 'Medium' | 'High' = 'Low';
+    if (adjustedRisk >= 70) {
+      portfolioRiskBucket = 'High';
+    } else if (adjustedRisk >= 40) {
+      portfolioRiskBucket = 'Medium';
+    }
+
+    // Sort rows by exposure descending
+    rows.sort((a, b) => b.exposure - a.exposure);
+
+    perCurrency[currency] = {
+      totalExposure: Math.round(totalExposure * 100) / 100,
+      baseRisk: Math.round(baseRisk * 10) / 10,
+      adjustedRisk: Math.round(adjustedRisk * 10) / 10,
+      concentrationPenalty,
+      maxConcentration: Math.round(maxConcentration * 1000) / 1000,
+      riskBucket: portfolioRiskBucket,
+      buckets: {
+        low: Math.round(buckets.low * 100) / 100,
+        medium: Math.round(buckets.medium * 100) / 100,
+        high: Math.round(buckets.high * 100) / 100,
       },
-      exposure: amount,
-      risk: airlineRisk,
-      riskBucket,
-    });
+      rows,
+    };
   }
 
-  // Calculate portfolio risk (exposure-weighted average)
-  const baseRisk = totalExposure > 0 ? weightedRiskSum / totalExposure : 0;
-
-  // Calculate concentration penalty
-  const maxExposureAmount = Math.max(...exposuresWithRisk.map(e => e.exposure));
-  const maxConcentration = totalExposure > 0 ? maxExposureAmount / totalExposure : 0;
-  
-  let concentrationPenalty = 0;
-  if (maxConcentration > 0.7) {
-    concentrationPenalty = 10;
-  } else if (maxConcentration > 0.5) {
-    concentrationPenalty = 5;
-  }
-
-  // Calculate adjusted risk (clamped at 100)
-  const adjustedRisk = Math.min(100, baseRisk + concentrationPenalty);
-
-  // Determine portfolio risk bucket based on adjusted risk
-  let portfolioRiskBucket: 'Low' | 'Medium' | 'High' = 'Low';
-  if (adjustedRisk >= 70) {
-    portfolioRiskBucket = 'High';
-  } else if (adjustedRisk >= 40) {
-    portfolioRiskBucket = 'Medium';
-  }
-
-  // Sort exposures by amount (largest first)
-  const topExposures = exposuresWithRisk
-    .sort((a, b) => b.exposure - a.exposure)
-    .slice(0, 10); // Top 10 exposures
+  // For backward compatibility, use first currency as default
+  const primaryCurrency = currencies[0] || 'USD';
+  const primaryData = perCurrency[primaryCurrency] || {
+    totalExposure: 0,
+    baseRisk: 0,
+    adjustedRisk: 0,
+    concentrationPenalty: 0,
+    maxConcentration: 0,
+    riskBucket: 'Low' as const,
+    buckets: { low: 0, medium: 0, high: 0 },
+    rows: [],
+  };
 
   return {
-    totalExposure: Math.round(totalExposure * 100) / 100,
-    baseRisk: Math.round(baseRisk * 10) / 10,
-    adjustedRisk: Math.round(adjustedRisk * 10) / 10,
-    portfolioRisk: Math.round(adjustedRisk * 10) / 10, // For backward compatibility
-    concentrationPenalty,
-    maxConcentration: Math.round(maxConcentration * 1000) / 1000, // 3 decimal places
-    riskBucket: portfolioRiskBucket,
-    buckets: {
-      low: Math.round(buckets.low * 100) / 100,
-      medium: Math.round(buckets.medium * 100) / 100,
-      high: Math.round(buckets.high * 100) / 100,
-    },
-    topExposures,
+    perCurrency,
+    currencies,
+    totalExposure: primaryData.totalExposure,
+    baseRisk: primaryData.baseRisk,
+    adjustedRisk: primaryData.adjustedRisk,
+    portfolioRisk: primaryData.adjustedRisk,
+    concentrationPenalty: primaryData.concentrationPenalty,
+    maxConcentration: primaryData.maxConcentration,
+    riskBucket: primaryData.riskBucket,
+    buckets: primaryData.buckets,
+    topExposures: primaryData.rows.slice(0, 10),
     currency: primaryCurrency,
   };
 }
