@@ -2,28 +2,15 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import prisma from '@/lib/db';
 import { calculatePortfolioRisk } from '@/lib/portfolio-risk';
+import { getCurrencySymbol, getRiskBucketColor, getScoreColor } from '@/lib/display-utils';
 import DeletePortfolioButton from './DeletePortfolioButton';
 import AddExposureForm from './AddExposureForm';
 import EmptyState from './EmptyState';
 import EditExposureButton from './EditExposureButton';
 import DeleteExposureButton from './DeleteExposureButton';
+import ScenarioAnalysis from './ScenarioAnalysis';
+import ConcentrationInsights from './ConcentrationInsights';
 import { getOrCalculateAirlineRisk } from '@/lib/risk-cache';
-
-// Helper function to get currency symbol
-function getCurrencySymbol(currency: string): string {
-  const symbols: Record<string, string> = {
-    'USD': '$',
-    'EUR': '€',
-    'GBP': '£',
-    'JPY': '¥',
-    'CNY': '¥',
-    'CHF': 'CHF',
-    'AUD': 'A$',
-    'CAD': 'C$',
-    'INR': '₹',
-  };
-  return symbols[currency] || currency + ' ';
-}
 
 async function getPortfolio(id: string) {
   try {
@@ -102,25 +89,6 @@ async function getPortfolio(id: string) {
     console.error('Error fetching portfolio:', error);
     return null;
   }
-}
-
-function getRiskBucketColor(bucket: string) {
-  switch (bucket) {
-    case 'Low':
-      return 'bg-green-100 text-green-800';
-    case 'Medium':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'High':
-      return 'bg-red-100 text-red-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-}
-
-function getScoreColor(score: number) {
-  if (score < 40) return 'text-green-600';
-  if (score < 70) return 'text-yellow-600';
-  return 'text-red-600';
 }
 
 export default async function PortfolioDetailPage({ params }: { params: { id: string } }) {
@@ -226,6 +194,7 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                         </ul>
                       </div>
 
+                      {/* Exposure by Risk Bucket */}
                       <div className="mt-4">
                         <h5 className="text-sm font-medium text-gray-700 mb-3">Exposure by Risk Bucket ({currency})</h5>
                         <div className="grid grid-cols-3 gap-4">
@@ -257,6 +226,58 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                             </div>
                           </div>
                         </div>
+                      </div>
+
+                      {/* Concentration Insights - Integrated */}
+                      <div className="mt-4">
+                        <h5 className="text-sm font-medium text-gray-700 mb-3">Top Exposures & Concentration</h5>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                          <div className="bg-blue-50 p-3 rounded-lg col-span-1">
+                            <div className="text-xs font-medium text-blue-900">Largest Exposure</div>
+                            <div className="mt-1 text-xl font-semibold text-blue-900">
+                              {(currencyData.maxConcentration * 100).toFixed(1)}%
+                            </div>
+                            <div className="text-xs text-blue-700">{currencyData.rows[0]?.airline.name || 'N/A'}</div>
+                          </div>
+                          <div className="bg-gray-50 p-3 rounded-lg col-span-2">
+                            <div className="text-xs font-medium text-gray-700 mb-2">Top 3 Airlines</div>
+                            <div className="space-y-1">
+                              {currencyData.rows.slice(0, 3).map((exp: any, idx: number) => {
+                                const share = currencyData.totalExposure > 0 ? (exp.exposure / currencyData.totalExposure) * 100 : 0;
+                                return (
+                                  <div key={exp.airline.icao} className="flex items-center justify-between text-xs">
+                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                      <span className="flex-shrink-0 w-4 h-4 rounded-full bg-blue-100 text-blue-800 text-[10px] font-semibold flex items-center justify-center">
+                                        {idx + 1}
+                                      </span>
+                                      <span className="font-medium text-gray-900 truncate">{exp.airline.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                      <span className="font-semibold text-gray-900">{share.toFixed(1)}%</span>
+                                      <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-full ${getRiskBucketColor(exp.riskBucket)}`}>
+                                        {exp.riskBucket}
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+
+                        {currencyData.maxConcentration > 0.5 && (
+                          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                            <div className="flex">
+                              <svg className="h-4 w-4 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                              </svg>
+                              <div className="text-xs">
+                                <span className="font-medium text-yellow-900">High concentration: </span>
+                                <span className="text-yellow-700">{(currencyData.maxConcentration * 100).toFixed(1)}% allocated to one airline. Consider diversifying.</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -362,6 +383,58 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                     </div>
                   </div>
                 </div>
+
+                {/* Concentration Insights - Integrated */}
+                <div className="mt-6">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Top Exposures & Concentration</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                    <div className="bg-blue-50 p-3 rounded-lg col-span-1">
+                      <div className="text-xs font-medium text-blue-900">Largest Exposure</div>
+                      <div className="mt-1 text-xl font-semibold text-blue-900">
+                        {(risk.maxConcentration * 100).toFixed(1)}%
+                      </div>
+                      <div className="text-xs text-blue-700">{risk.topExposures[0]?.airline.name || 'N/A'}</div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg col-span-2">
+                      <div className="text-xs font-medium text-gray-700 mb-2">Top 3 Airlines</div>
+                      <div className="space-y-1">
+                        {risk.topExposures.slice(0, 3).map((exp: any, idx: number) => {
+                          const share = risk.totalExposure > 0 ? (exp.exposure / risk.totalExposure) * 100 : 0;
+                          return (
+                            <div key={exp.airline.icao} className="flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <span className="flex-shrink-0 w-4 h-4 rounded-full bg-blue-100 text-blue-800 text-[10px] font-semibold flex items-center justify-center">
+                                  {idx + 1}
+                                </span>
+                                <span className="font-medium text-gray-900 truncate">{exp.airline.name}</span>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <span className="font-semibold text-gray-900">{share.toFixed(1)}%</span>
+                                <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-full ${getRiskBucketColor(exp.riskBucket)}`}>
+                                  {exp.riskBucket}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {risk.maxConcentration > 0.5 && (
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                      <div className="flex">
+                        <svg className="h-4 w-4 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        <div className="text-xs">
+                          <span className="font-medium text-yellow-900">High concentration: </span>
+                          <span className="text-yellow-700">{(risk.maxConcentration * 100).toFixed(1)}% allocated to one airline. Consider diversifying.</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </>
             )}
           </div>
@@ -370,6 +443,88 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
 
       {/* Empty state for portfolios without exposures */}
       {portfolio.exposures.length === 0 && <EmptyState />}
+
+      {/* Scenario Analysis - Standalone Interactive Tool */}
+      {portfolio.exposures.length > 0 && risk && (
+        <div className="mb-6">
+          {risk.currencies.length === 1 ? (
+            <ScenarioAnalysis
+              exposures={portfolio.exposures.map((exp: any) => ({
+                id: exp.id,
+                airlineIcao: exp.airline.icao,
+                airlineName: exp.airline.name,
+                airlineCountry: exp.airline.country,
+                exposureAmount: exp.exposureAmount,
+                currency: exp.currency,
+                riskScore: exp.airline.riskSnapshots?.[0]?.overallScore || 50,
+                riskBucket: exp.airline.riskSnapshots?.[0]?.riskBucket || 'Medium',
+              }))}
+              currency={risk.currency}
+              currentMetrics={{
+                baseRisk: risk.baseRisk,
+                adjustedRisk: risk.adjustedRisk,
+                concentrationPenalty: risk.concentrationPenalty,
+                riskBucket: risk.riskBucket,
+              }}
+            />
+          ) : (
+            <div className="space-y-4">
+              <h3 className="text-lg leading-6 font-medium text-gray-900 flex items-center">
+                <svg className="h-5 w-5 mr-2 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                What-if Scenario Analysis
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Select a currency to run what-if scenarios and test exposure changes.
+              </p>
+              <div className="grid grid-cols-1 gap-4">
+                {risk.currencies.map((currency) => {
+                  const currencyData = risk.perCurrency[currency];
+                  const currencyExposures = portfolio.exposures.filter((exp: any) => exp.currency === currency);
+                  
+                  return (
+                    <details key={currency} className="bg-white shadow sm:rounded-lg">
+                      <summary className="px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-between">
+                        <div className="flex items-center">
+                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-semibold mr-3">{currency}</span>
+                          <span className="text-sm text-gray-700">
+                            {getCurrencySymbol(currency)}{(currencyData.totalExposure / 1000000).toFixed(1)}M • {currencyExposures.length} airlines
+                          </span>
+                        </div>
+                        <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </summary>
+                      <div className="px-4 pb-4">
+                        <ScenarioAnalysis
+                          exposures={currencyExposures.map((exp: any) => ({
+                            id: exp.id,
+                            airlineIcao: exp.airline.icao,
+                            airlineName: exp.airline.name,
+                            airlineCountry: exp.airline.country,
+                            exposureAmount: exp.exposureAmount,
+                            currency: exp.currency,
+                            riskScore: exp.airline.riskSnapshots?.[0]?.overallScore || 50,
+                            riskBucket: exp.airline.riskSnapshots?.[0]?.riskBucket || 'Medium',
+                          }))}
+                          currency={currency}
+                          currentMetrics={{
+                            baseRisk: currencyData.baseRisk,
+                            adjustedRisk: currencyData.adjustedRisk,
+                            concentrationPenalty: currencyData.concentrationPenalty,
+                            riskBucket: currencyData.riskBucket,
+                          }}
+                        />
+                      </div>
+                    </details>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Add Exposure Form */}
       <div className="mb-6" id="add-exposure-form">
