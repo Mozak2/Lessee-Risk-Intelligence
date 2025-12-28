@@ -45,7 +45,7 @@ export default function PortfolioCard({ portfolio }: PortfolioCardProps) {
   };
 
   return (
-    <div className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow relative">
+    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow relative border border-transparent dark:border-gray-700">
       <Link href={`/portfolios/${portfolio.id}`}>
         <div className="px-4 py-5 sm:p-6">
           <div className="flex items-start justify-between">

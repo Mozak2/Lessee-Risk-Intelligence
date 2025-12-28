@@ -2,6 +2,8 @@ import Link from 'next/link';
 import prisma from '@/lib/db';
 import PortfolioCard from './PortfolioCard';
 
+export const dynamic = 'force-dynamic';
+
 async function getPortfolios() {
   try {
     const portfolios = await prisma.portfolio.findMany({
@@ -42,7 +44,7 @@ export default async function PortfoliosPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="md:flex md:items-center md:justify-between">
         <div className="flex-1 min-w-0">
-          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          <h2 className="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
             Lease Portfolios
           </h2>
         </div>
@@ -72,8 +74,8 @@ export default async function PortfoliosPage() {
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
               />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No portfolios</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No portfolios</h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Get started by creating a portfolio to track your airline lease exposures.
             </p>
             <p className="mt-2 text-xs text-gray-400">

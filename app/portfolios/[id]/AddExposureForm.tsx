@@ -146,7 +146,7 @@ export default function AddExposureForm({ portfolioId }: AddExposureFormProps) {
   }
 
   return (
-    <div className="bg-white shadow sm:rounded-lg p-6">
+    <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border border-transparent dark:border-gray-700">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-medium text-gray-900">Add Airline Exposure</h3>
         <button
@@ -169,7 +169,7 @@ export default function AddExposureForm({ portfolioId }: AddExposureFormProps) {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded">
             {error}
           </div>
         )}
@@ -214,7 +214,7 @@ export default function AddExposureForm({ portfolioId }: AddExposureFormProps) {
             </button>
           </div>
           {showDropdown && filteredAirlines.length > 0 && (
-            <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md border border-gray-300 overflow-auto">
+            <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-700 shadow-lg max-h-60 rounded-md border border-gray-300 dark:border-gray-600 overflow-auto">
               {filteredAirlines.slice(0, 50).map((airline) => (
                 <button
                   key={airline.icao}
@@ -323,7 +323,7 @@ export default function AddExposureForm({ portfolioId }: AddExposureFormProps) {
               setIsOpen(false);
               setError('');
             }}
-            className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             Cancel
           </button>

@@ -5,6 +5,8 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  // Disable static export for pages using client-side themes
+  output: undefined,
   // Enable server-side API caching
   async headers() {
     return [

@@ -104,18 +104,18 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
-        <Link href="/portfolios" className="text-sm text-blue-600 hover:text-blue-800">
+        <Link href="/portfolios" className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
           ← Back to Portfolios
         </Link>
       </div>
 
       {/* Portfolio Header */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+      <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg mb-6">
         <div className="px-4 py-5 sm:px-6 flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{portfolio.name}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{portfolio.name}</h1>
             {portfolio.description && (
-              <p className="mt-1 text-sm text-gray-500">{portfolio.description}</p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{portfolio.description}</p>
             )}
           </div>
           <DeletePortfolioButton portfolioId={portfolio.id} portfolioName={portfolio.name} />
@@ -124,9 +124,9 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
 
       {/* Portfolio Risk Summary */}
       {risk && portfolio.exposures.length > 0 && (
-        <div className="bg-white shadow sm:rounded-lg mb-6">
+        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Portfolio Risk Summary</h3>
+            <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Portfolio Risk Summary</h3>
             
             {/* Multi-currency summary */}
             {risk.currencies.length > 1 ? (
@@ -134,15 +134,15 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                 {risk.currencies.map((currency) => {
                   const currencyData = risk.perCurrency[currency];
                   return (
-                    <div key={currency} className="border-b pb-6 last:border-b-0">
-                      <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm mr-2">{currency}</span>
+                    <div key={currency} className="border-b border-gray-200 dark:border-gray-700 pb-6 last:border-b-0">
+                      <h4 className="text-md font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center">
+                        <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-sm mr-2">{currency}</span>
                         {getCurrencySymbol(currency)}{(currencyData.totalExposure / 1000000).toFixed(1)}M Total
                       </h4>
                       
                       <div className="grid grid-cols-1 gap-5 sm:grid-cols-4 mb-4">
                         <div>
-                          <div className="text-sm font-medium text-gray-500" title="Exposure-weighted average of airline risk scores">
+                          <div className="text-sm font-medium text-gray-500 dark:text-gray-400" title="Exposure-weighted average of airline risk scores">
                             Base Risk (Weighted Average)
                           </div>
                           <div className={`mt-1 text-2xl font-semibold ${getScoreColor(currencyData.baseRisk)}`}>
@@ -175,54 +175,54 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                           </div>
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-gray-500">Airlines</div>
-                          <div className="mt-1 text-2xl font-semibold text-gray-900">{currencyData.rows.length}</div>
+                          <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Airlines</div>
+                          <div className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{currencyData.rows.length}</div>
                         </div>
                       </div>
 
                       {/* Explanation block */}
-                      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-                        <h5 className="text-sm font-semibold text-blue-900 mb-2">Risk Calculation</h5>
-                        <ul className="text-xs text-blue-800 space-y-1">
+                      <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                        <h5 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">Risk Calculation</h5>
+                        <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
                           <li><strong>Base Risk (Weighted Average)</strong> represents the exposure-weighted average of individual airline risk scores.</li>
                           <li><strong>Adjusted Risk (Concentration Applied)</strong> is the base risk {currencyData.concentrationPenalty > 0 ? `plus a +${currencyData.concentrationPenalty} concentration penalty` : 'with no concentration adjustment applied'}.</li>
                           {currencyData.concentrationPenalty > 0 ? (
-                            <li className="text-yellow-700"><strong>Concentration penalty applied:</strong> {(currencyData.maxConcentration * 100).toFixed(1)}% of exposure is held with a single airline.</li>
+                            <li className="text-yellow-700 dark:text-yellow-400"><strong>Concentration penalty applied:</strong> {(currencyData.maxConcentration * 100).toFixed(1)}% of exposure is held with a single airline.</li>
                           ) : (
-                            <li className="text-green-700"><strong>No concentration penalty applied.</strong> Exposure is diversified across airlines.</li>
+                            <li className="text-green-700 dark:text-green-400"><strong>No concentration penalty applied.</strong> Exposure is diversified across airlines.</li>
                           )}
-                          <li className="text-gray-600 italic mt-2"><strong>Note:</strong> Exposure is grouped by currency. FX conversion is not applied.</li>
+                          <li className="text-gray-600 dark:text-gray-400 italic mt-2"><strong>Note:</strong> Exposure is grouped by currency. FX conversion is not applied.</li>
                         </ul>
                       </div>
 
                       {/* Exposure by Risk Bucket */}
                       <div className="mt-4">
-                        <h5 className="text-sm font-medium text-gray-700 mb-3">Exposure by Risk Bucket ({currency})</h5>
+                        <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Exposure by Risk Bucket ({currency})</h5>
                         <div className="grid grid-cols-3 gap-4">
-                          <div className="bg-green-50 p-3 rounded-lg">
-                            <div className="text-xs font-medium text-green-800">Low Risk</div>
-                            <div className="text-lg font-semibold text-green-900">
+                          <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+                            <div className="text-xs font-medium text-green-800 dark:text-green-300">Low Risk</div>
+                            <div className="text-lg font-semibold text-green-900 dark:text-green-200">
                               {getCurrencySymbol(currency)}{(currencyData.buckets.low / 1000000).toFixed(1)}M
                             </div>
-                            <div className="text-xs text-green-700">
+                            <div className="text-xs text-green-700 dark:text-green-400">
                               {currencyData.totalExposure > 0 ? ((currencyData.buckets.low / currencyData.totalExposure) * 100).toFixed(0) : 0}%
                             </div>
                           </div>
-                          <div className="bg-yellow-50 p-3 rounded-lg">
-                            <div className="text-xs font-medium text-yellow-800">Medium Risk</div>
-                            <div className="text-lg font-semibold text-yellow-900">
+                          <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                            <div className="text-xs font-medium text-yellow-800 dark:text-yellow-300">Medium Risk</div>
+                            <div className="text-lg font-semibold text-yellow-900 dark:text-yellow-200">
                               {getCurrencySymbol(currency)}{(currencyData.buckets.medium / 1000000).toFixed(1)}M
                             </div>
-                            <div className="text-xs text-yellow-700">
+                            <div className="text-xs text-yellow-700 dark:text-yellow-400">
                               {currencyData.totalExposure > 0 ? ((currencyData.buckets.medium / currencyData.totalExposure) * 100).toFixed(0) : 0}%
                             </div>
                           </div>
-                          <div className="bg-red-50 p-3 rounded-lg">
-                            <div className="text-xs font-medium text-red-800">High Risk</div>
-                            <div className="text-lg font-semibold text-red-900">
+                          <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+                            <div className="text-xs font-medium text-red-800 dark:text-red-300">High Risk</div>
+                            <div className="text-lg font-semibold text-red-900 dark:text-red-200">
                               {getCurrencySymbol(currency)}{(currencyData.buckets.high / 1000000).toFixed(1)}M
                             </div>
-                            <div className="text-xs text-red-700">
+                            <div className="text-xs text-red-700 dark:text-red-400">
                               {currencyData.totalExposure > 0 ? ((currencyData.buckets.high / currencyData.totalExposure) * 100).toFixed(0) : 0}%
                             </div>
                           </div>
@@ -231,30 +231,30 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
 
                       {/* Concentration Insights - Integrated */}
                       <div className="mt-4">
-                        <h5 className="text-sm font-medium text-gray-700 mb-3">Top Exposures & Concentration</h5>
+                        <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Top Exposures & Concentration</h5>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-                          <div className="bg-blue-50 p-3 rounded-lg col-span-1">
-                            <div className="text-xs font-medium text-blue-900">Largest Exposure</div>
-                            <div className="mt-1 text-xl font-semibold text-blue-900">
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg col-span-1 border border-blue-200 dark:border-blue-800">
+                            <div className="text-xs font-medium text-blue-900 dark:text-blue-300">Largest Exposure</div>
+                            <div className="mt-1 text-xl font-semibold text-blue-900 dark:text-blue-200">
                               {(currencyData.maxConcentration * 100).toFixed(1)}%
                             </div>
-                            <div className="text-xs text-blue-700">{currencyData.rows[0]?.airline.name || 'N/A'}</div>
+                            <div className="text-xs text-blue-700 dark:text-blue-400">{currencyData.rows[0]?.airline.name || 'N/A'}</div>
                           </div>
-                          <div className="bg-gray-50 p-3 rounded-lg col-span-2">
-                            <div className="text-xs font-medium text-gray-700 mb-2">Top 3 Airlines</div>
+                          <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg col-span-2 border border-gray-200 dark:border-gray-700">
+                            <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Top 3 Airlines</div>
                             <div className="space-y-1">
                               {currencyData.rows.slice(0, 3).map((exp: any, idx: number) => {
                                 const share = currencyData.totalExposure > 0 ? (exp.exposure / currencyData.totalExposure) * 100 : 0;
                                 return (
                                   <div key={exp.airline.icao} className="flex items-center justify-between text-xs">
                                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                                      <span className="flex-shrink-0 w-4 h-4 rounded-full bg-blue-100 text-blue-800 text-[10px] font-semibold flex items-center justify-center">
+                                      <span className="flex-shrink-0 w-4 h-4 rounded-full bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 text-[10px] font-semibold flex items-center justify-center">
                                         {idx + 1}
                                       </span>
-                                      <span className="font-medium text-gray-900 truncate">{exp.airline.name}</span>
+                                      <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{exp.airline.name}</span>
                                     </div>
                                     <div className="flex items-center gap-2 flex-shrink-0">
-                                      <span className="font-semibold text-gray-900">{share.toFixed(1)}%</span>
+                                      <span className="font-semibold text-gray-900 dark:text-gray-100">{share.toFixed(1)}%</span>
                                       <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-full ${getRiskBucketColor(exp.riskBucket)}`}>
                                         {exp.riskBucket}
                                       </span>
@@ -267,14 +267,14 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                         </div>
 
                         {currencyData.maxConcentration > 0.5 && (
-                          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                          <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
                             <div className="flex">
-                              <svg className="h-4 w-4 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                              <svg className="h-4 w-4 text-yellow-600 dark:text-yellow-500 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                               </svg>
                               <div className="text-xs">
-                                <span className="font-medium text-yellow-900">High concentration: </span>
-                                <span className="text-yellow-700">{(currencyData.maxConcentration * 100).toFixed(1)}% allocated to one airline. Consider diversifying.</span>
+                                <span className="font-medium text-yellow-900 dark:text-yellow-300">High concentration: </span>
+                                <span className="text-yellow-700 dark:text-yellow-400">{(currencyData.maxConcentration * 100).toFixed(1)}% allocated to one airline. Consider diversifying.</span>
                               </div>
                             </div>
                           </div>
@@ -284,7 +284,7 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                   );
                 })}
 
-                <div className="text-xs text-gray-500 italic mt-4 p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500 dark:text-gray-400 italic mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
                   <strong>Note:</strong> Exposure is shown by currency. FX conversion is not applied in this MVP.
                 </div>
               </div>
@@ -293,14 +293,14 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
               <>
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-5">
                   <div>
-                    <div className="text-sm font-medium text-gray-500">Total Exposure</div>
-                    <div className="mt-1 text-2xl font-semibold text-gray-900">
+                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Exposure</div>
+                    <div className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
                       {getCurrencySymbol(risk.currency)}{(risk.totalExposure / 1000000).toFixed(1)}M
                     </div>
-                    <div className="text-xs text-gray-500">{risk.currency}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{risk.currency}</div>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-gray-500" title="Exposure-weighted average of airline risk scores">
+                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400" title="Exposure-weighted average of airline risk scores">
                       Base Risk (Weighted Average)
                     </div>
                     <div className={`mt-1 text-2xl font-semibold ${getScoreColor(risk.baseRisk)}`}>
@@ -308,7 +308,7 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-gray-500" title="Base risk adjusted for portfolio concentration">
+                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400" title="Base risk adjusted for portfolio concentration">
                       Adjusted Risk (Concentration Applied)
                     </div>
                     <div className={`mt-1 text-2xl font-semibold ${getScoreColor(risk.adjustedRisk)}`}>
@@ -319,7 +319,7 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-gray-500" title="Categorizes risk as Low / Medium / High">
+                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400" title="Categorizes risk as Low / Medium / High">
                       Risk Bucket
                     </div>
                     <div className="mt-1">
@@ -333,52 +333,52 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-gray-500">Airlines</div>
-                    <div className="mt-1 text-2xl font-semibold text-gray-900">{risk.topExposures.length}</div>
+                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Airlines</div>
+                    <div className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{risk.topExposures.length}</div>
                   </div>
                 </div>
 
                 {/* Explanation block */}
-                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-                  <h5 className="text-sm font-semibold text-blue-900 mb-2">Risk Calculation</h5>
-                  <ul className="text-xs text-blue-800 space-y-1">
+                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                  <h5 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">Risk Calculation</h5>
+                  <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
                     <li><strong>Base Risk (Weighted Average)</strong> represents the exposure-weighted average of individual airline risk scores.</li>
                     <li><strong>Adjusted Risk (Concentration Applied)</strong> is the base risk {risk.concentrationPenalty > 0 ? `plus a +${risk.concentrationPenalty} concentration penalty` : 'with no concentration adjustment applied'}.</li>
                     {risk.concentrationPenalty > 0 ? (
-                      <li className="text-yellow-700"><strong>Concentration penalty applied:</strong> {(risk.maxConcentration * 100).toFixed(1)}% of exposure is held with a single airline.</li>
+                      <li className="text-yellow-700 dark:text-yellow-400"><strong>Concentration penalty applied:</strong> {(risk.maxConcentration * 100).toFixed(1)}% of exposure is held with a single airline.</li>
                     ) : (
-                      <li className="text-green-700"><strong>No concentration penalty applied.</strong> Exposure is diversified across airlines.</li>
+                      <li className="text-green-700 dark:text-green-400"><strong>No concentration penalty applied.</strong> Exposure is diversified across airlines.</li>
                     )}
                   </ul>
                 </div>
 
                 <div className="mt-6">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">Exposure by Risk Bucket</h4>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Exposure by Risk Bucket</h4>
                   <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-green-50 p-3 rounded-lg">
-                      <div className="text-xs font-medium text-green-800">Low Risk</div>
-                      <div className="text-lg font-semibold text-green-900">
+                    <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-transparent dark:border-green-800">
+                      <div className="text-xs font-medium text-green-800 dark:text-green-200">Low Risk</div>
+                      <div className="text-lg font-semibold text-green-900 dark:text-green-100">
                         {getCurrencySymbol(risk.currency)}{(risk.buckets.low / 1000000).toFixed(1)}M
                       </div>
-                      <div className="text-xs text-green-700">
+                      <div className="text-xs text-green-700 dark:text-green-300">
                         {risk.totalExposure > 0 ? ((risk.buckets.low / risk.totalExposure) * 100).toFixed(0) : 0}%
                       </div>
                     </div>
-                    <div className="bg-yellow-50 p-3 rounded-lg">
-                      <div className="text-xs font-medium text-yellow-800">Medium Risk</div>
-                      <div className="text-lg font-semibold text-yellow-900">
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-transparent dark:border-yellow-800">
+                      <div className="text-xs font-medium text-yellow-800 dark:text-yellow-200">Medium Risk</div>
+                      <div className="text-lg font-semibold text-yellow-900 dark:text-yellow-100">
                         {getCurrencySymbol(risk.currency)}{(risk.buckets.medium / 1000000).toFixed(1)}M
                       </div>
-                      <div className="text-xs text-yellow-700">
+                      <div className="text-xs text-yellow-700 dark:text-yellow-300">
                         {risk.totalExposure > 0 ? ((risk.buckets.medium / risk.totalExposure) * 100).toFixed(0) : 0}%
                       </div>
                     </div>
-                    <div className="bg-red-50 p-3 rounded-lg">
-                      <div className="text-xs font-medium text-red-800">High Risk</div>
-                      <div className="text-lg font-semibold text-red-900">
+                    <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-transparent dark:border-red-800">
+                      <div className="text-xs font-medium text-red-800 dark:text-red-200">High Risk</div>
+                      <div className="text-lg font-semibold text-red-900 dark:text-red-100">
                         {getCurrencySymbol(risk.currency)}{(risk.buckets.high / 1000000).toFixed(1)}M
                       </div>
-                      <div className="text-xs text-red-700">
+                      <div className="text-xs text-red-700 dark:text-red-300">
                         {risk.totalExposure > 0 ? ((risk.buckets.high / risk.totalExposure) * 100).toFixed(0) : 0}%
                       </div>
                     </div>
@@ -387,30 +387,30 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
 
                 {/* Concentration Insights - Integrated */}
                 <div className="mt-6">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">Top Exposures & Concentration</h4>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Top Exposures & Concentration</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-                    <div className="bg-blue-50 p-3 rounded-lg col-span-1">
-                      <div className="text-xs font-medium text-blue-900">Largest Exposure</div>
-                      <div className="mt-1 text-xl font-semibold text-blue-900">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg col-span-1 border border-transparent dark:border-blue-800">
+                      <div className="text-xs font-medium text-blue-900 dark:text-blue-100">Largest Exposure</div>
+                      <div className="mt-1 text-xl font-semibold text-blue-900 dark:text-blue-100">
                         {(risk.maxConcentration * 100).toFixed(1)}%
                       </div>
-                      <div className="text-xs text-blue-700">{risk.topExposures[0]?.airline.name || 'N/A'}</div>
+                      <div className="text-xs text-blue-700 dark:text-blue-300">{risk.topExposures[0]?.airline.name || 'N/A'}</div>
                     </div>
-                    <div className="bg-gray-50 p-3 rounded-lg col-span-2">
-                      <div className="text-xs font-medium text-gray-700 mb-2">Top 3 Airlines</div>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg col-span-2 border border-transparent dark:border-gray-700">
+                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Top 3 Airlines</div>
                       <div className="space-y-1">
                         {risk.topExposures.slice(0, 3).map((exp: any, idx: number) => {
                           const share = risk.totalExposure > 0 ? (exp.exposure / risk.totalExposure) * 100 : 0;
                           return (
                             <div key={exp.airline.icao} className="flex items-center justify-between text-xs">
                               <div className="flex items-center gap-2 flex-1 min-w-0">
-                                <span className="flex-shrink-0 w-4 h-4 rounded-full bg-blue-100 text-blue-800 text-[10px] font-semibold flex items-center justify-center">
+                                <span className="flex-shrink-0 w-4 h-4 rounded-full bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100 text-[10px] font-semibold flex items-center justify-center">
                                   {idx + 1}
                                 </span>
-                                <span className="font-medium text-gray-900 truncate">{exp.airline.name}</span>
+                                <span className="font-medium text-gray-900 dark:text-white truncate">{exp.airline.name}</span>
                               </div>
                               <div className="flex items-center gap-2 flex-shrink-0">
-                                <span className="font-semibold text-gray-900">{share.toFixed(1)}%</span>
+                                <span className="font-semibold text-gray-900 dark:text-white">{share.toFixed(1)}%</span>
                                 <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-full ${getRiskBucketColor(exp.riskBucket)}`}>
                                   {exp.riskBucket}
                                 </span>
@@ -423,14 +423,14 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                   </div>
 
                   {risk.maxConcentration > 0.5 && (
-                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
                       <div className="flex">
                         <svg className="h-4 w-4 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                         </svg>
                         <div className="text-xs">
-                          <span className="font-medium text-yellow-900">High concentration: </span>
-                          <span className="text-yellow-700">{(risk.maxConcentration * 100).toFixed(1)}% allocated to one airline. Consider diversifying.</span>
+                          <span className="font-medium text-yellow-900 dark:text-yellow-100">High concentration: </span>
+                          <span className="text-yellow-700 dark:text-yellow-300">{(risk.maxConcentration * 100).toFixed(1)}% allocated to one airline. Consider diversifying.</span>
                         </div>
                       </div>
                     </div>
@@ -470,13 +470,13 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
             />
           ) : (
             <div className="space-y-4">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 flex items-center">
+              <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white flex items-center">
                 <svg className="h-5 w-5 mr-2 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
                 What-if Scenario Analysis
               </h3>
-              <p className="text-sm text-gray-500 mb-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                 Select a currency to run what-if scenarios and test exposure changes.
               </p>
               <div className="grid grid-cols-1 gap-4">
@@ -485,11 +485,11 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                   const currencyExposures = portfolio.exposures.filter((exp: any) => exp.currency === currency);
                   
                   return (
-                    <details key={currency} className="bg-white shadow sm:rounded-lg">
-                      <summary className="px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-between">
+                    <details key={currency} className="bg-white dark:bg-gray-800 shadow sm:rounded-lg border border-transparent dark:border-gray-700">
+                      <summary className="px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-between">
                         <div className="flex items-center">
-                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-semibold mr-3">{currency}</span>
-                          <span className="text-sm text-gray-700">
+                          <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 px-2 py-1 rounded text-sm font-semibold mr-3">{currency}</span>
+                          <span className="text-sm text-gray-700 dark:text-gray-300">
                             {getCurrencySymbol(currency)}{(currencyData.totalExposure / 1000000).toFixed(1)}M • {currencyExposures.length} airlines
                           </span>
                         </div>
@@ -541,21 +541,21 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
       </div>
 
       {/* Exposures List */}
-      <div className="bg-white shadow sm:rounded-lg">
+      <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">Lease Exposures</h3>
+            <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">Lease Exposures</h3>
             <p className="text-xs text-gray-500 italic" title="Derived from airline operational, country, and financial indicators">Sorted by exposure amount (highest first)</p>
           </div>
 
           {portfolio.exposures.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">No exposures in this portfolio yet.</p>
+              <p className="text-gray-500 dark:text-gray-400">No exposures in this portfolio yet.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Airline
@@ -577,29 +577,29 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {portfolio.exposures
                     .sort((a: any, b: any) => b.exposureAmount - a.exposureAmount)
                     .map((exposure: any) => {
                     const latestSnapshot = exposure.airline.riskSnapshots?.[0];
                     return (
-                      <tr key={exposure.id} className="hover:bg-gray-50">
+                      <tr key={exposure.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <Link
                             href={`/airlines/${exposure.airline.icao}`}
-                            className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                            className="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                           >
                             {exposure.airline.name}
                           </Link>
-                          <div className="text-xs text-gray-500">{exposure.airline.icao}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{exposure.airline.icao}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {getCurrencySymbol(exposure.currency)}{exposure.exposureAmount.toLocaleString()}
                           </div>
-                          <div className="text-xs text-gray-500">{exposure.currency}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{exposure.currency}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                           {exposure.numAircraft || '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -612,7 +612,7 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                               {latestSnapshot.overallScore}
                             </span>
                           ) : (
-                            <span className="text-sm text-gray-500">N/A</span>
+                            <span className="text-sm text-gray-500 dark:text-gray-400">N/A</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -625,7 +625,7 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
                               {latestSnapshot.riskBucket}
                             </span>
                           ) : (
-                            <span className="text-sm text-gray-500">-</span>
+                            <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -652,9 +652,9 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
       </div>
 
       {/* How Portfolio Risk is Calculated - Collapsible Section */}
-      <details className="bg-white shadow sm:rounded-lg mt-6">
-        <summary className="px-4 py-5 sm:p-6 cursor-pointer hover:bg-gray-50 transition-colors">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 inline-flex items-center">
+      <details className="bg-white dark:bg-gray-800 shadow sm:rounded-lg mt-6">
+        <summary className="px-4 py-5 sm:p-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+          <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white inline-flex items-center">
             <svg className="h-5 w-5 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -662,7 +662,7 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
           </h3>
         </summary>
         <div className="px-4 pb-5 sm:px-6 sm:pb-6 pt-0">
-          <div className="prose prose-sm max-w-none text-gray-600">
+          <div className="prose prose-sm max-w-none text-gray-600 dark:text-gray-300">
             <h4 className="text-sm font-semibold text-gray-900 mt-0 mb-2">Methodology Overview</h4>
             <ul className="space-y-2 text-sm">
               <li>

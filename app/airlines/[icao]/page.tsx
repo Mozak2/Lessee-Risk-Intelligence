@@ -92,31 +92,31 @@ export default async function AirlinePage({ params }: { params: { icao: string }
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
-        <Link href="/airlines" className="text-sm text-blue-600 hover:text-blue-800">
+        <Link href="/airlines" className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
           ← Back to Airlines
         </Link>
       </div>
 
       {/* Header */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+      <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg mb-6 border border-transparent dark:border-gray-700">
         <div className="px-4 py-5 sm:px-6">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-bold text-gray-900">{airline.name}</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{airline.name}</h1>
                 {airline.isPublic !== undefined && (
-                  <span className="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-700">
+                  <span className="px-2 py-1 text-xs font-medium rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
                     {airline.isPublic ? 'Public' : 'Private'}
                   </span>
                 )}
               </div>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 {airline.icao} {airline.iata && `/ ${airline.iata}`} • {airline.country}
               </p>
             </div>
             <span
               className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                airline.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                airline.active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100'
               }`}
             >
               {airline.active ? 'Active' : 'Inactive'}
@@ -126,12 +126,12 @@ export default async function AirlinePage({ params }: { params: { icao: string }
       </div>
 
       {/* Overall Risk Score */}
-      <div className="bg-white shadow sm:rounded-lg mb-6">
+      <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6 border border-transparent dark:border-gray-700">
         <div className="px-4 py-5 sm:p-6">
           <div className="sm:flex sm:items-center sm:justify-between">
             <div>
-              <h3 className="text-lg leading-6 font-medium text-gray-900">Overall Risk Score</h3>
-              <div className="mt-2 max-w-xl text-sm text-gray-500">
+              <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">Overall Risk Score</h3>
+              <div className="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">
                 <p>Last updated: {new Date(risk.calculatedAt).toLocaleString()}</p>
                 <p className="text-xs mt-1 italic">Based on derived estimates and public data</p>
               </div>
@@ -153,15 +153,15 @@ export default async function AirlinePage({ params }: { params: { icao: string }
       </div>
 
       {/* Risk Breakdown */}
-      <div className="bg-white shadow sm:rounded-lg mb-6">
+      <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6 border border-transparent dark:border-gray-700">
         <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-2">Risk Components</h3>
-          <p className="text-sm text-gray-500 mb-4">Lower scores indicate lower risk (better performance). These are derived estimates.</p>
+          <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-2">Risk Components</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Lower scores indicate lower risk (better performance). These are derived estimates.</p>
           <div className="space-y-4">
             {risk.breakdown.map((component: any) => (
               <div key={component.key}>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="font-medium text-gray-700">
+                  <span className="font-medium text-gray-700 dark:text-gray-300">
                     {component.name} ({Math.round(component.weight * 100)}% weight)
                   </span>
                   <div className="flex items-center gap-2">
@@ -185,7 +185,7 @@ export default async function AirlinePage({ params }: { params: { icao: string }
                     )}
                   </div>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
                   <div
                     className={`h-2.5 rounded-full ${
                       component.score < 40
@@ -206,30 +206,30 @@ export default async function AirlinePage({ params }: { params: { icao: string }
       {/* Detailed Metrics */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {/* Country Info */}
-        <div className="bg-white shadow sm:rounded-lg">
+        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg border border-transparent dark:border-gray-700">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-base font-semibold text-gray-900 mb-4">Country Information</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Country Information</h3>
             <dl className="space-y-2">
               <div>
-                <dt className="text-sm font-medium text-gray-500">Country</dt>
-                <dd className="text-sm text-gray-900">{airline.country}</dd>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Country</dt>
+                <dd className="text-sm text-gray-900 dark:text-white">{airline.country}</dd>
               </div>
               {context.countryInfo?.region && (
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Region</dt>
-                  <dd className="text-sm text-gray-900">{context.countryInfo.region}</dd>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Region</dt>
+                  <dd className="text-sm text-gray-900 dark:text-white">{context.countryInfo.region}</dd>
                 </div>
               )}
               {context.countryInfo?.subregion && (
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Subregion</dt>
-                  <dd className="text-sm text-gray-900">{context.countryInfo.subregion}</dd>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Subregion</dt>
+                  <dd className="text-sm text-gray-900 dark:text-white">{context.countryInfo.subregion}</dd>
                 </div>
               )}
               {context.countryInfo?.gini && (
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Gini Index</dt>
-                  <dd className="text-sm text-gray-900">{context.countryInfo.gini.toFixed(1)}</dd>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Gini Index</dt>
+                  <dd className="text-sm text-gray-900 dark:text-white">{context.countryInfo.gini.toFixed(1)}</dd>
                 </div>
               )}
             </dl>
@@ -237,22 +237,22 @@ export default async function AirlinePage({ params }: { params: { icao: string }
         </div>
 
         {/* Operational Presence */}
-        <div className="bg-white shadow sm:rounded-lg">
+        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg border border-transparent dark:border-gray-700">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-base font-semibold text-gray-900 mb-4">Operational Presence</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Operational Presence</h3>
             <dl className="space-y-2">
               <div>
-                <dt className="text-sm font-medium text-gray-500">Operational Status</dt>
-                <dd className="text-sm text-gray-900">
-                  <span className={`inline-flex px-2 py-1 text-xs rounded-full ${airline.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Operational Status</dt>
+                <dd className="text-sm text-gray-900 dark:text-white">
+                  <span className={`inline-flex px-2 py-1 text-xs rounded-full ${airline.active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100'}`}>
                     {airline.active ? 'Active' : 'Inactive'}
                   </span>
                 </dd>
               </div>
               {airline.fleetSize !== undefined && (
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Fleet Presence</dt>
-                  <dd className="text-sm text-gray-900">
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Fleet Presence</dt>
+                  <dd className="text-sm text-gray-900 dark:text-white">
                     {airline.fleetSize >= 200 ? 'Major Operator' :
                      airline.fleetSize >= 50 ? 'Medium to Large' :
                      airline.fleetSize >= 10 ? 'Small to Medium' :
@@ -266,20 +266,20 @@ export default async function AirlinePage({ params }: { params: { icao: string }
         </div>
 
         {/* Fleet Size */}
-        <div className="bg-white shadow sm:rounded-lg">
+        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg border border-transparent dark:border-gray-700">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-base font-semibold text-gray-900 mb-4">Fleet Information</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Fleet Information</h3>
             <dl className="space-y-2">
               <div>
-                <dt className="text-sm font-medium text-gray-500">Fleet Size</dt>
-                <dd className="text-2xl font-bold text-gray-900">
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Fleet Size</dt>
+                <dd className="text-2xl font-bold text-gray-900 dark:text-white">
                   {airline.fleetSize ?? 'Unknown'}
                 </dd>
               </div>
               {airline.fleetSize && (
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Size Category</dt>
-                  <dd className="text-sm text-gray-900">
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Size Category</dt>
+                  <dd className="text-sm text-gray-900 dark:text-white">
                     {airline.fleetSize >= 100
                       ? 'Large'
                       : airline.fleetSize >= 50
@@ -295,23 +295,23 @@ export default async function AirlinePage({ params }: { params: { icao: string }
         </div>
 
         {/* Financial Metrics */}
-        <div className="bg-white shadow sm:rounded-lg">
+        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg border border-transparent dark:border-gray-700">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-base font-semibold text-gray-900 mb-4">Financial Health</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Financial Health</h3>
             {context.financialData?.available ? (
               <dl className="space-y-2">
                 {context.financialData.ticker && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Stock Ticker</dt>
-                    <dd className="text-sm font-mono text-gray-900">{context.financialData.ticker}</dd>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Stock Ticker</dt>
+                    <dd className="text-sm font-mono text-gray-900 dark:text-white">{context.financialData.ticker}</dd>
                   </div>
                 )}
                 {context.financialData.debtToEquity !== undefined && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Debt-to-Equity</dt>
-                    <dd className="text-sm text-gray-900">
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Debt-to-Equity</dt>
+                    <dd className="text-sm text-gray-900 dark:text-white">
                       {context.financialData.debtToEquity.toFixed(2)}
-                      <span className="ml-1 text-xs text-gray-500">
+                      <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">
                         {context.financialData.debtToEquity < 1 ? '(Excellent)' :
                          context.financialData.debtToEquity < 2 ? '(Good)' :
                          context.financialData.debtToEquity < 3 ? '(Moderate)' :
@@ -322,10 +322,10 @@ export default async function AirlinePage({ params }: { params: { icao: string }
                 )}
                 {context.financialData.profitMargin !== undefined && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Profit Margin</dt>
-                    <dd className="text-sm text-gray-900">
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Profit Margin</dt>
+                    <dd className="text-sm text-gray-900 dark:text-white">
                       {context.financialData.profitMargin.toFixed(2)}%
-                      <span className="ml-1 text-xs text-gray-500">
+                      <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">
                         {context.financialData.profitMargin >= 10 ? '(Excellent)' :
                          context.financialData.profitMargin >= 5 ? '(Good)' :
                          context.financialData.profitMargin >= 0 ? '(Moderate)' :
@@ -336,10 +336,10 @@ export default async function AirlinePage({ params }: { params: { icao: string }
                 )}
                 {context.financialData.cashToDebt !== undefined && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Cash-to-Debt</dt>
-                    <dd className="text-sm text-gray-900">
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Cash-to-Debt</dt>
+                    <dd className="text-sm text-gray-900 dark:text-white">
                       {context.financialData.cashToDebt.toFixed(2)}
-                      <span className="ml-1 text-xs text-gray-500">
+                      <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">
                         {context.financialData.cashToDebt >= 1 ? '(Strong)' :
                          context.financialData.cashToDebt >= 0.5 ? '(Good)' :
                          context.financialData.cashToDebt >= 0.3 ? '(Moderate)' :
@@ -349,23 +349,23 @@ export default async function AirlinePage({ params }: { params: { icao: string }
                   </div>
                 )}
                 {context.financialData.fiscalYear && (
-                  <div className="pt-2 border-t border-gray-200">
-                    <dt className="text-xs text-gray-400">Data Source</dt>
-                    <dd className="text-xs text-gray-600">
+                  <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <dt className="text-xs text-gray-400 dark:text-gray-500">Data Source</dt>
+                    <dd className="text-xs text-gray-600 dark:text-gray-400">
                       {context.financialData.dataSource === 'mock' ? 'Mock Data' : 'API'} • FY {context.financialData.fiscalYear}
                     </dd>
                   </div>
                 )}
               </dl>
             ) : (
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 <p className="mb-2">
                   {airline.isPublic === false 
                     ? 'Financial data unavailable for government-owned airlines.'
                     : 'Financial data unavailable for this airline.'}
                 </p>
                 {airline.ticker && (
-                  <p className="text-xs text-gray-400">Ticker: {airline.ticker}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Ticker: {airline.ticker}</p>
                 )}
               </div>
             )}
@@ -374,9 +374,9 @@ export default async function AirlinePage({ params }: { params: { icao: string }
       </div>
 
       {/* Risk Score Legend */}
-      <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-gray-900 mb-2">Risk Score Guide</h4>
-        <div className="grid grid-cols-3 gap-4 text-xs text-gray-600">
+      <div className="mt-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Risk Score Guide</h4>
+        <div className="grid grid-cols-3 gap-4 text-xs text-gray-600 dark:text-gray-400">
           <div>
             <span className="font-semibold text-green-600">0-30: Low Risk</span>
             <p className="mt-1">Stable airline with strong fundamentals</p>

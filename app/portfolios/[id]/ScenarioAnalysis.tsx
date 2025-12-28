@@ -81,7 +81,7 @@ export default function ScenarioAnalysis({
   const currentTotalExposure = exposures.reduce((sum, e) => sum + e.exposureAmount, 0);
 
   return (
-    <div className="bg-white shadow sm:rounded-lg">
+    <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg border border-transparent dark:border-gray-700">
       <div className="px-4 py-5 sm:p-6">
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -101,7 +101,7 @@ export default function ScenarioAnalysis({
                 d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
               />
             </svg>
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
               What-if Scenario Analysis
             </h3>
           </div>
@@ -124,13 +124,13 @@ export default function ScenarioAnalysis({
 
         {isOpen && (
           <div className="mt-4 space-y-4">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Simulate changes to exposure amounts and see how portfolio risk would be affected.
               Changes are temporary and not saved.
             </p>
 
             {simulatedResult && (
-              <div className="p-3 bg-purple-50 border border-purple-200 rounded-md flex items-center justify-between">
+              <div className="p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-md flex items-center justify-between">
                 <div className="flex items-center">
                   <svg className="h-5 w-5 text-purple-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path
@@ -139,13 +139,13 @@ export default function ScenarioAnalysis({
                       clipRule="evenodd"
                     />
                   </svg>
-                  <span className="text-sm font-medium text-purple-900">
+                  <span className="text-sm font-medium text-purple-900 dark:text-purple-100">
                     Scenario mode active (not saved)
                   </span>
                 </div>
                 <button
                   onClick={handleClear}
-                  className="text-sm text-purple-700 hover:text-purple-900 font-medium"
+                  className="text-sm text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-purple-100 font-medium"
                 >
                   Clear scenario
                 </button>
@@ -160,7 +160,7 @@ export default function ScenarioAnalysis({
                 <select
                   value={selectedAirline}
                   onChange={(e) => setSelectedAirline(e.target.value)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm px-3 py-2 border"
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm px-3 py-2 border"
                 >
                   <option value="">Choose an airline...</option>
                   {exposures.map((exp) => (
@@ -177,7 +177,7 @@ export default function ScenarioAnalysis({
                 </label>
                 <div className="mt-1 relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-500 sm:text-sm">{getCurrencySymbol(currency)}</span>
+                    <span className="text-gray-500 dark:text-gray-400 sm:text-sm">{getCurrencySymbol(currency)}</span>
                   </div>
                   <input
                     type="number"
@@ -186,11 +186,11 @@ export default function ScenarioAnalysis({
                     placeholder="0"
                     min="0"
                     step="1000"
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm pl-8 py-2 border"
+                    className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm pl-8 py-2 border"
                   />
                 </div>
                 {selectedExposure && (
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Current: {getCurrencySymbol(currency)}
                     {selectedExposure.exposureAmount.toLocaleString()}
                   </p>
@@ -216,8 +216,8 @@ export default function ScenarioAnalysis({
 
             {simulatedResult && (
               <div className="mt-6 space-y-4">
-                <div className="border-t pt-4">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                <div className="border-t dark:border-gray-700 pt-4">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
                     <svg className="h-4 w-4 mr-2 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
@@ -227,10 +227,10 @@ export default function ScenarioAnalysis({
                   {/* Comparison Grid */}
                   <div className="grid grid-cols-1 gap-3">
                     {/* Total Exposure */}
-                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                      <div className="text-xs font-medium text-gray-500 mb-1">Total Exposure</div>
+                    <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Total Exposure</div>
                       <div className="flex items-baseline gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-gray-700">
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                           {getCurrencySymbol(currency)}{(currentTotalExposure / 1000000).toFixed(2)}M
                         </span>
                         <span className="text-gray-400">→</span>
@@ -254,11 +254,11 @@ export default function ScenarioAnalysis({
                         Base Risk (Weighted Average)
                       </div>
                       <div className="flex items-baseline gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-gray-700">
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                           {currentMetrics.baseRisk}
                         </span>
-                        <span className="text-gray-400">→</span>
-                        <span className="text-sm font-semibold text-gray-900">
+                        <span className="text-gray-400 dark:text-gray-500">→</span>
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
                           {simulatedResult.baseRisk}
                         </span>
                         <span

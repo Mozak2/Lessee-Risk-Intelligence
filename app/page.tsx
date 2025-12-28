@@ -1,13 +1,15 @@
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export default function HomePage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl md:text-6xl">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white sm:text-5xl md:text-6xl">
           Airline Risk Intelligence
         </h1>
-        <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
+        <p className="mt-3 max-w-md mx-auto text-base text-gray-500 dark:text-gray-400 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
           Comprehensive risk assessment for aircraft lessors. Analyze airline risk profiles,
           manage lease exposures, and optimize your portfolio.
         </p>
@@ -15,7 +17,7 @@ export default function HomePage() {
           <div className="rounded-md shadow">
             <Link
               href="/airlines"
-              className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
+              className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 md:py-4 md:text-lg md:px-10"
             >
               Search Airlines
             </Link>
@@ -23,7 +25,7 @@ export default function HomePage() {
           <div className="mt-3 rounded-md shadow sm:mt-0 sm:ml-3">
             <Link
               href="/portfolios"
-              className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10"
+              className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-blue-400 dark:hover:bg-gray-600 md:py-4 md:text-lg md:px-10"
             >
               View Portfolios
             </Link>
@@ -33,10 +35,10 @@ export default function HomePage() {
 
       <div className="mt-16">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center">
-                <div className="flex-shrink-0 bg-blue-500 rounded-md p-3">
+                <div className="flex-shrink-0 bg-blue-500 dark:bg-blue-600 rounded-md p-3">
                   <svg
                     className="h-6 w-6 text-white"
                     fill="none"
@@ -52,8 +54,8 @@ export default function HomePage() {
                   </svg>
                 </div>
                 <div className="ml-5">
-                  <h3 className="text-lg font-medium text-gray-900">Multi-Dimensional Risk</h3>
-                  <p className="mt-2 text-sm text-gray-500">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Multi-Dimensional Risk</h3>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     Country, activity, size, and status risk assessments
                   </p>
                 </div>
@@ -61,10 +63,10 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center">
-                <div className="flex-shrink-0 bg-green-500 rounded-md p-3">
+                <div className="flex-shrink-0 bg-green-500 dark:bg-green-600 rounded-md p-3">
                   <svg
                     className="h-6 w-6 text-white"
                     fill="none"
@@ -80,8 +82,8 @@ export default function HomePage() {
                   </svg>
                 </div>
                 <div className="ml-5">
-                  <h3 className="text-lg font-medium text-gray-900">Portfolio Management</h3>
-                  <p className="mt-2 text-sm text-gray-500">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Portfolio Management</h3>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     Track exposures and portfolio-level risk metrics
                   </p>
                 </div>
@@ -89,10 +91,10 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center">
-                <div className="flex-shrink-0 bg-purple-500 rounded-md p-3">
+                <div className="flex-shrink-0 bg-purple-500 dark:bg-purple-600 rounded-md p-3">
                   <svg
                     className="h-6 w-6 text-white"
                     fill="none"
@@ -108,8 +110,8 @@ export default function HomePage() {
                   </svg>
                 </div>
                 <div className="ml-5">
-                  <h3 className="text-lg font-medium text-gray-900">Real-Time Data</h3>
-                  <p className="mt-2 text-sm text-gray-500">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Real-Time Data</h3>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     Live flight data and country risk intelligence
                   </p>
                 </div>
