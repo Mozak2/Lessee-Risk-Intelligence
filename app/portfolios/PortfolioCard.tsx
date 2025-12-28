@@ -49,7 +49,7 @@ export default function PortfolioCard({ portfolio }: PortfolioCardProps) {
       <Link href={`/portfolios/${portfolio.id}`}>
         <div className="px-4 py-5 sm:p-6">
           <div className="flex items-start justify-between">
-            <h3 className="text-lg font-medium text-gray-900 truncate flex-1">{portfolio.name}</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white truncate flex-1">{portfolio.name}</h3>
             <button
               onClick={(e) => {
                 e.preventDefault();
@@ -76,7 +76,7 @@ export default function PortfolioCard({ portfolio }: PortfolioCardProps) {
           </div>
           
           {portfolio.description && (
-            <p className="mt-1 text-sm text-gray-500 line-clamp-2">{portfolio.description}</p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{portfolio.description}</p>
           )}
           
           {showDeleteConfirm && (
@@ -87,7 +87,7 @@ export default function PortfolioCard({ portfolio }: PortfolioCardProps) {
                 e.stopPropagation();
               }}
             >
-              <p className="text-sm text-red-800 mb-2">Delete this portfolio?</p>
+              <p className="text-sm text-red-800 dark:text-red-200 mb-2">Delete this portfolio?</p>
               <div className="flex gap-2">
                 <button
                   onClick={handleDelete}
@@ -112,19 +112,19 @@ export default function PortfolioCard({ portfolio }: PortfolioCardProps) {
           
           <div className="mt-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Airlines</span>
-              <span className="font-medium text-gray-900">{portfolio.numAirlines}</span>
+              <span className="text-gray-500 dark:text-gray-400">Airlines</span>
+              <span className="font-medium text-gray-900 dark:text-white">{portfolio.numAirlines}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Total Exposure</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-gray-500 dark:text-gray-400">Total Exposure</span>
+              <span className="font-medium text-gray-900 dark:text-white">
                 ${(portfolio.totalExposure / 1000000).toFixed(1)}M
               </span>
             </div>
           </div>
           
           <div className="mt-4 flex items-center">
-            <span className="text-sm font-medium text-blue-600">View details →</span>
+            <span className="text-sm font-medium text-blue-600 dark:text-blue-400">View details →</span>
           </div>
         </div>
       </Link>
