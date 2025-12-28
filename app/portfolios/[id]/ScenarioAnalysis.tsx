@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { calculateScenarioRisk } from '@/lib/scenario-calculator';
 import { getCurrencySymbol } from '@/lib/display-utils';
+import { formatDelta, getDeltaColorClass } from '@/lib/format';
 
 interface Exposure {
   id: string;
@@ -74,19 +75,10 @@ export default function ScenarioAnalysis({
     setSimulatedResult(null);
   };
 
-  const getDeltaColor = (delta: number) => {
-    if (delta < 0) return 'text-green-600';
-    if (delta > 0) return 'text-red-600';
-    return 'text-gray-600';
-  };
-
-  const formatDelta = (current: number, simulated: number) => {
-    const delta = simulated - current;
-    const sign = delta >= 0 ? '+' : '';
-    return `${sign}${delta.toFixed(1)}`;
-  };
-
   const selectedExposure = exposures.find(e => e.airlineIcao === selectedAirline);
+
+  // Calculate current total exposure for comparison
+  const currentTotalExposure = exposures.reduce((sum, e) => sum + e.exposureAmount, 0);
 
   return (
     <div className="bg-white shadow sm:rounded-lg">
@@ -225,96 +217,160 @@ export default function ScenarioAnalysis({
             {simulatedResult && (
               <div className="mt-6 space-y-4">
                 <div className="border-t pt-4">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Simulated Results</h4>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                    <svg className="h-4 w-4 mr-2 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Scenario Comparison
+                  </h4>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-gray-50 p-3 rounded-lg">
+                  {/* Comparison Grid */}
+                  <div className="grid grid-cols-1 gap-3">
+                    {/* Total Exposure */}
+                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                      <div className="text-xs font-medium text-gray-500 mb-1">Total Exposure</div>
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <span className="text-sm font-semibold text-gray-700">
+                          {getCurrencySymbol(currency)}{(currentTotalExposure / 1000000).toFixed(2)}M
+                        </span>
+                        <span className="text-gray-400">→</span>
+                        <span className="text-sm font-semibold text-gray-900">
+                          {getCurrencySymbol(currency)}{(simulatedResult.totalExposure / 1000000).toFixed(2)}M
+                        </span>
+                        <span
+                          className={`text-xs font-medium ${getDeltaColorClass(
+                            simulatedResult.totalExposure - currentTotalExposure,
+                            true
+                          )}`}
+                        >
+                          ({formatDelta(simulatedResult.totalExposure - currentTotalExposure)})
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Base Risk */}
+                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                       <div className="text-xs font-medium text-gray-500 mb-1">
                         Base Risk (Weighted Average)
                       </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-lg font-semibold text-gray-900">
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <span className="text-sm font-semibold text-gray-700">
                           {currentMetrics.baseRisk}
                         </span>
                         <span className="text-gray-400">→</span>
-                        <span className="text-lg font-semibold text-gray-900">
+                        <span className="text-sm font-semibold text-gray-900">
                           {simulatedResult.baseRisk}
                         </span>
                         <span
-                          className={`text-sm font-medium ${getDeltaColor(
+                          className={`text-xs font-medium ${getDeltaColorClass(
                             simulatedResult.baseRisk - currentMetrics.baseRisk
                           )}`}
                         >
-                          ({formatDelta(currentMetrics.baseRisk, simulatedResult.baseRisk)})
+                          ({formatDelta(simulatedResult.baseRisk - currentMetrics.baseRisk)})
                         </span>
                       </div>
                     </div>
 
-                    <div className="bg-gray-50 p-3 rounded-lg">
+                    {/* Concentration */}
+                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                       <div className="text-xs font-medium text-gray-500 mb-1">
-                        Adjusted Risk
+                        Max Concentration
                       </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-lg font-semibold text-gray-900">
-                          {currentMetrics.adjustedRisk}
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <span className="text-sm font-semibold text-gray-700">
+                          {(currentMetrics.concentrationPenalty > 0 ? 
+                            (simulatedResult.maxConcentration * 100).toFixed(1) : 
+                            '0.0')}%
                         </span>
                         <span className="text-gray-400">→</span>
-                        <span className="text-lg font-semibold text-gray-900">
-                          {simulatedResult.adjustedRisk}
+                        <span className="text-sm font-semibold text-gray-900">
+                          {(simulatedResult.maxConcentration * 100).toFixed(1)}%
                         </span>
                         <span
-                          className={`text-sm font-medium ${getDeltaColor(
-                            simulatedResult.adjustedRisk - currentMetrics.adjustedRisk
+                          className={`text-xs font-medium ${getDeltaColorClass(
+                            (simulatedResult.maxConcentration * 100) - 
+                            (currentMetrics.concentrationPenalty > 0 ? 
+                              (simulatedResult.maxConcentration * 100) : 0)
                           )}`}
                         >
-                          ({formatDelta(currentMetrics.adjustedRisk, simulatedResult.adjustedRisk)})
+                          ({formatDelta(
+                            (simulatedResult.maxConcentration * 100) - 
+                            (currentMetrics.concentrationPenalty > 0 ? 
+                              (simulatedResult.maxConcentration * 100) : 0)
+                          )}%)
                         </span>
                       </div>
                     </div>
 
-                    <div className="bg-gray-50 p-3 rounded-lg">
+                    {/* Concentration Penalty */}
+                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                       <div className="text-xs font-medium text-gray-500 mb-1">
                         Concentration Penalty
                       </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-lg font-semibold text-gray-900">
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <span className="text-sm font-semibold text-gray-700">
                           +{currentMetrics.concentrationPenalty}
                         </span>
                         <span className="text-gray-400">→</span>
-                        <span className="text-lg font-semibold text-gray-900">
+                        <span className="text-sm font-semibold text-gray-900">
                           +{simulatedResult.concentrationPenalty}
                         </span>
                         <span
-                          className={`text-sm font-medium ${getDeltaColor(
+                          className={`text-xs font-medium ${getDeltaColorClass(
                             simulatedResult.concentrationPenalty - currentMetrics.concentrationPenalty
                           )}`}
                         >
                           ({formatDelta(
-                            currentMetrics.concentrationPenalty,
-                            simulatedResult.concentrationPenalty
+                            simulatedResult.concentrationPenalty - currentMetrics.concentrationPenalty
                           )})
                         </span>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-sm font-medium text-gray-700">Risk Bucket: </span>
-                        <span className="text-sm font-semibold text-gray-900">
-                          {currentMetrics.riskBucket}
+                    {/* Adjusted Risk */}
+                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                      <div className="text-xs font-medium text-purple-700 mb-1">
+                        Adjusted Risk (Final)
+                      </div>
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <span className="text-base font-bold text-purple-800">
+                          {currentMetrics.adjustedRisk}
                         </span>
-                        <span className="text-sm text-gray-500 mx-2">→</span>
-                        <span className="text-sm font-semibold text-gray-900">
-                          {simulatedResult.riskBucket}
+                        <span className="text-purple-400">→</span>
+                        <span className="text-base font-bold text-purple-900">
+                          {simulatedResult.adjustedRisk}
+                        </span>
+                        <span
+                          className={`text-sm font-bold ${getDeltaColorClass(
+                            simulatedResult.adjustedRisk - currentMetrics.adjustedRisk
+                          )}`}
+                        >
+                          ({formatDelta(simulatedResult.adjustedRisk - currentMetrics.adjustedRisk)})
                         </span>
                       </div>
-                      {currentMetrics.riskBucket !== simulatedResult.riskBucket && (
-                        <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-1 rounded">
-                          Bucket Changed
-                        </span>
-                      )}
+                    </div>
+
+                    {/* Risk Bucket */}
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-xs font-medium text-blue-700 mb-1">Risk Bucket</div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-blue-900">
+                              {currentMetrics.riskBucket}
+                            </span>
+                            <span className="text-blue-400">→</span>
+                            <span className="text-sm font-semibold text-blue-900">
+                              {simulatedResult.riskBucket}
+                            </span>
+                          </div>
+                        </div>
+                        {currentMetrics.riskBucket !== simulatedResult.riskBucket && (
+                          <span className="px-2 py-1 text-xs font-bold text-orange-700 bg-orange-100 rounded">
+                            CHANGED
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

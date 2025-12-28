@@ -10,6 +10,7 @@ import EditExposureButton from './EditExposureButton';
 import DeleteExposureButton from './DeleteExposureButton';
 import ScenarioAnalysis from './ScenarioAnalysis';
 import ConcentrationInsights from './ConcentrationInsights';
+import ExportControls from './ExportControls';
 import { getOrCalculateAirlineRisk } from '@/lib/risk-cache';
 
 async function getPortfolio(id: string) {
@@ -524,6 +525,14 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
             </div>
           )}
         </div>
+      )}
+
+      {/* Export Controls */}
+      {risk && (
+        <ExportControls
+          portfolio={portfolio}
+          risk={risk}
+        />
       )}
 
       {/* Add Exposure Form */}
