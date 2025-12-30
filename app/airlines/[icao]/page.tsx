@@ -52,6 +52,7 @@ async function getAirlineRiskData(icao: string) {
         breakdown: riskResult.breakdown,
         calculatedAt: riskResult.calculatedAt,
         expiresAt: riskResult.expiresAt,
+        metadata: riskResult.metadata,
       },
       context: riskResult.context,
     };
@@ -156,49 +157,95 @@ export default async function AirlinePage({ params }: { params: { icao: string }
       <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6 border border-transparent dark:border-gray-700">
         <div className="px-4 py-5 sm:p-6">
           <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-2">Risk Components</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Lower scores indicate lower risk (better performance). These are derived estimates.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            Lower scores indicate lower risk (better performance). These are derived estimates.
+            {risk.metadata?.reweighted && (
+              <span className="block mt-1 text-amber-600 dark:text-amber-400">
+                ⚠ Scores reweighted due to missing data components
+              </span>
+            )}
+          </p>
           <div className="space-y-4">
-            {risk.breakdown.map((component: any) => (
-              <div key={component.key}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="font-medium text-gray-700 dark:text-gray-300">
-                    {component.name} ({Math.round(component.weight * 100)}% weight)
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className={`font-semibold ${getScoreColor(component.score)}`}>
-                      {component.score.toFixed(1)}
-                    </span>
-                    {component.score <= 10 && (
-                      <span className="text-xs text-green-700 font-medium">Excellent</span>
-                    )}
-                    {component.score > 10 && component.score < 40 && (
-                      <span className="text-xs text-green-600 font-medium">Good</span>
-                    )}
-                    {component.score >= 40 && component.score < 70 && (
-                      <span className="text-xs text-yellow-600 font-medium">Medium</span>
-                    )}
-                    {component.score >= 70 && component.score <= 80 && (
-                      <span className="text-xs text-red-600 font-medium">Concern</span>
-                    )}
-                    {component.score > 80 && (
-                      <span className="text-xs text-red-700 font-medium">High Risk</span>
-                    )}
+            {risk.breakdown.map((component: any) => {
+              const isUnavailable = component.score === null || component.score === undefined;
+              
+              return (
+                <div key={component.key}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {component.name}
+                      </span>
+                      {/* Confidence badge */}
+                      {component.confidence && (
+                        <span className={`px-2 py-0.5 text-xs font-medium rounded ${
+                          component.confidence === 'HIGH' 
+                            ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' 
+                            : component.confidence === 'MEDIUM'
+                            ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                        }`}>
+                          {component.confidence}
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        ({Math.round(component.weight * 100)}% weight
+                        {component.effectiveWeight && component.effectiveWeight !== component.weight && (
+                          <>, adjusted to {Math.round(component.effectiveWeight * 100)}%</>
+                        )})
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isUnavailable ? (
+                        <span className="text-sm text-gray-500 dark:text-gray-400 italic">
+                          Data unavailable
+                        </span>
+                      ) : (
+                        <>
+                          <span className={`font-semibold ${getScoreColor(component.score)}`}>
+                            {component.score.toFixed(1)}
+                          </span>
+                          {component.score <= 10 && (
+                            <span className="text-xs text-green-700 dark:text-green-300 font-medium">Excellent</span>
+                          )}
+                          {component.score > 10 && component.score < 40 && (
+                            <span className="text-xs text-green-600 dark:text-green-400 font-medium">Good</span>
+                          )}
+                          {component.score >= 40 && component.score < 70 && (
+                            <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">Medium</span>
+                          )}
+                          {component.score >= 70 && component.score <= 80 && (
+                            <span className="text-xs text-red-600 dark:text-red-400 font-medium">Concern</span>
+                          )}
+                          {component.score > 80 && (
+                            <span className="text-xs text-red-700 dark:text-red-300 font-medium">High Risk</span>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
+                  {!isUnavailable && (
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                      <div
+                        className={`h-2.5 rounded-full ${
+                          component.score < 40
+                            ? 'bg-green-600'
+                            : component.score < 70
+                            ? 'bg-yellow-600'
+                            : 'bg-red-600'
+                        }`}
+                        style={{ width: `${Math.max(component.score, 2)}%` }}
+                      ></div>
+                    </div>
+                  )}
+                  {isUnavailable && (
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                      <div className="h-2.5 rounded-full bg-gray-400 dark:bg-gray-600" style={{ width: '100%', opacity: 0.3 }}></div>
+                    </div>
+                  )}
                 </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                  <div
-                    className={`h-2.5 rounded-full ${
-                      component.score < 40
-                        ? 'bg-green-600'
-                        : component.score < 70
-                        ? 'bg-yellow-600'
-                        : 'bg-red-600'
-                    }`}
-                    style={{ width: `${Math.max(component.score, 2)}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -217,19 +264,19 @@ export default async function AirlinePage({ params }: { params: { icao: string }
               {context.countryInfo?.region && (
                 <div>
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Region</dt>
-                  <dd className="text-sm text-gray-900 dark:text-white">{context.countryInfo.region}</dd>
+                  <dd className="text-sm text-gray-900 dark:text-white">{context.countryInfo?.region}</dd>
                 </div>
               )}
               {context.countryInfo?.subregion && (
                 <div>
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Subregion</dt>
-                  <dd className="text-sm text-gray-900 dark:text-white">{context.countryInfo.subregion}</dd>
+                  <dd className="text-sm text-gray-900 dark:text-white">{context.countryInfo?.subregion}</dd>
                 </div>
               )}
               {context.countryInfo?.gini && (
                 <div>
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Gini Index</dt>
-                  <dd className="text-sm text-gray-900 dark:text-white">{context.countryInfo.gini.toFixed(1)}</dd>
+                  <dd className="text-sm text-gray-900 dark:text-white">{context.countryInfo?.gini?.toFixed(1)}</dd>
                 </div>
               )}
             </dl>

@@ -118,7 +118,9 @@ export default async function PortfolioDetailPage({ params }: { params: { id: st
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{portfolio.description}</p>
             )}
           </div>
-          <DeletePortfolioButton portfolioId={portfolio.id} portfolioName={portfolio.name} />
+          {portfolio.name !== 'Sample Leasing Portfolio' && (
+            <DeletePortfolioButton portfolioId={portfolio.id} portfolioName={portfolio.name} />
+          )}
         </div>
       </div>
 

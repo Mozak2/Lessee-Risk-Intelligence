@@ -7,6 +7,7 @@ import {
   RiskConfig,
   DEFAULT_RISK_CONFIG,
   scoreToRiskBucket,
+  RiskDimensionKey,
 } from './risk-model';
 import { enabledRiskSources } from './sources/risk-sources';
 import prisma from './db';
@@ -16,6 +17,7 @@ export type { RiskContext };
 
 /**
  * Calculate overall airline risk by aggregating all enabled risk sources
+ * Handles missing components by reweighting across available data
  */
 export async function calculateAirlineRisk(
   context: RiskContext,
@@ -24,47 +26,68 @@ export async function calculateAirlineRisk(
   // Calculate components from all enabled sources
   const allComponents: RiskComponents = {};
   const breakdown = [];
+  const missingComponents: string[] = [];
   
   let totalWeightedScore = 0;
   let totalWeight = 0;
+  let totalAvailableWeight = 0;
+  let reweighted = false;
   
   for (const source of enabledRiskSources) {
     if (!source.enabled) continue;
     
-    const sourceComponents = await source.calculate(context);
+    const componentScore = await source.calculate(context);
     
-    // Extract financial metadata if present and update context
-    if (source.key === 'financial' && sourceComponents.financialMetadata) {
-      context.financialData = sourceComponents.financialMetadata as any;
+    // Store the component with its metadata
+    allComponents[source.key] = componentScore;
+    
+    // Update context with financial metadata if present
+    if (source.key === 'financial' && componentScore.metadata) {
+      context.financialData = componentScore.metadata as any;
     }
     
-    // Merge components (exclude metadata keys)
-    Object.entries(sourceComponents).forEach(([key, value]) => {
-      if (!key.endsWith('Metadata')) {
-        allComponents[key] = value;
-      }
-    });
+    // Handle null scores (missing data)
+    if (componentScore.score === null || componentScore.score === undefined) {
+      missingComponents.push(source.name);
+      breakdown.push({
+        key: source.key,
+        name: source.name,
+        score: null,
+        confidence: componentScore.confidence,
+        weight: source.weight,
+        effectiveWeight: 0, // Not used in calculation
+      });
+      continue;
+    }
     
-    // Calculate weighted contribution (only from numeric scores)
-    const numericScores = Object.entries(sourceComponents)
-      .filter(([key]) => !key.endsWith('Metadata'))
-      .map(([, score]) => score as number);
-    
-    const sourceScore = numericScores.reduce((sum: number, score: number) => sum + score, 0) / numericScores.length;
-    
-    totalWeightedScore += sourceScore * source.weight;
+    // Component is available - include in weighted calculation
+    totalWeightedScore += componentScore.score * source.weight;
     totalWeight += source.weight;
+    totalAvailableWeight += source.weight;
     
     breakdown.push({
       key: source.key,
       name: source.name,
-      score: sourceScore,
+      score: componentScore.score,
+      confidence: componentScore.confidence,
       weight: source.weight,
+      effectiveWeight: source.weight, // Will be normalized if reweighted
     });
   }
   
-  // Calculate overall score (weighted average)
-  const overallScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 50;
+  // Reweight if some components are missing
+  if (totalAvailableWeight < 1.0 && totalAvailableWeight > 0) {
+    reweighted = true;
+    // Normalize weights of available components to sum to 1.0
+    breakdown.forEach(item => {
+      if (item.score !== null && item.effectiveWeight) {
+        item.effectiveWeight = item.weight / totalAvailableWeight;
+      }
+    });
+  }
+  
+  // Calculate overall score (weighted average of available components)
+  const overallScore = totalAvailableWeight > 0 ? totalWeightedScore / totalAvailableWeight : 50;
   const riskBucket = scoreToRiskBucket(overallScore, config);
   
   const calculatedAt = new Date();
@@ -78,6 +101,10 @@ export async function calculateAirlineRisk(
     context,
     calculatedAt,
     expiresAt,
+    metadata: {
+      missingComponents: missingComponents.length > 0 ? missingComponents : undefined,
+      reweighted: reweighted ? true : undefined,
+    },
   };
 }
 
@@ -166,21 +193,110 @@ async function getCachedRiskSnapshot(icao: string): Promise<RiskResult | null> {
   
   // Reconstruct RiskResult from snapshot
   const components: RiskComponents = {};
-  if (snapshot.countryScore) components.country = snapshot.countryScore;
-  if (snapshot.activityScore) components.activity = snapshot.activityScore;
-  if (snapshot.sizeScore) components.size = snapshot.sizeScore;
-  if (snapshot.statusScore) components.status = snapshot.statusScore;
-  if (snapshot.newsScore) components.news = snapshot.newsScore;
-  if (snapshot.financialScore) components.financial = snapshot.financialScore;
+  
+  if (snapshot.jurisdictionScore !== null) {
+    components.jurisdiction = {
+      score: snapshot.jurisdictionScore,
+      confidence: (snapshot.jurisdictionConfidence as any) || 'MEDIUM',
+      metadata: {},
+    };
+  }
+  
+  if (snapshot.scaleScore !== null) {
+    components.scale = {
+      score: snapshot.scaleScore,
+      confidence: (snapshot.scaleConfidence as any) || 'MEDIUM',
+      metadata: {},
+    };
+  }
+  
+  if (snapshot.assetLiquidityScore !== null) {
+    components.assetLiquidity = {
+      score: snapshot.assetLiquidityScore,
+      confidence: (snapshot.assetLiquidityConfidence as any) || 'LOW',
+      metadata: {},
+    };
+  }
+  
+  if (snapshot.financialScore !== null) {
+    components.financial = {
+      score: snapshot.financialScore,
+      confidence: (snapshot.financialConfidence as any) || 'MEDIUM',
+      metadata: {},
+    };
+  }
+  
+  // Parse component metadata if available
+  if (snapshot.componentMetadata) {
+    try {
+      const metadata = JSON.parse(snapshot.componentMetadata);
+      if (components.jurisdiction) components.jurisdiction.metadata = metadata.jurisdiction || {};
+      if (components.scale) components.scale.metadata = metadata.scale || {};
+      if (components.assetLiquidity) components.assetLiquidity.metadata = metadata.assetLiquidity || {};
+      if (components.financial) components.financial.metadata = metadata.financial || {};
+    } catch (e) {
+      // Ignore parse errors
+    }
+  }
+  
+  // Reconstruct breakdown (simplified)
+  const breakdown = [];
+  if (components.jurisdiction) {
+    breakdown.push({
+      key: 'jurisdiction' as RiskDimensionKey,
+      name: 'Jurisdiction Risk (proxy)',
+      score: components.jurisdiction.score,
+      confidence: components.jurisdiction.confidence,
+      weight: 0.25,
+    });
+  }
+  if (components.scale) {
+    breakdown.push({
+      key: 'scale' as RiskDimensionKey,
+      name: 'Scale & Network Strength',
+      score: components.scale.score,
+      confidence: components.scale.confidence,
+      weight: 0.20,
+    });
+  }
+  if (components.assetLiquidity) {
+    breakdown.push({
+      key: 'assetLiquidity' as RiskDimensionKey,
+      name: 'Fleet & Asset Liquidity (proxy)',
+      score: components.assetLiquidity.score,
+      confidence: components.assetLiquidity.confidence,
+      weight: 0.20,
+    });
+  }
+  if (components.financial) {
+    breakdown.push({
+      key: 'financial' as RiskDimensionKey,
+      name: 'Financial Strength',
+      score: components.financial.score,
+      confidence: components.financial.confidence,
+      weight: 0.35,
+    });
+  }
   
   return {
     overallScore: snapshot.overallScore,
     riskBucket: snapshot.riskBucket as any,
     components,
-    breakdown: [], // Could reconstruct from sourceData if needed
-    context: (snapshot.sourceData as any) || { airline: { icao, name: airline.name, country: airline.country, active: airline.active } },
+    breakdown,
+    context: (snapshot.sourceData as any) || { 
+      airline: { 
+        icao, 
+        name: airline.name, 
+        country: airline.country, 
+        active: airline.active 
+      } 
+    },
     calculatedAt: snapshot.calculatedAt,
     expiresAt: snapshot.expiresAt,
+    metadata: {
+      missingComponents: snapshot.missingComponents ? snapshot.missingComponents.split(', ') : undefined,
+      reweighted: snapshot.reweighted ? true : undefined,
+    },
   };
 }
 
@@ -188,18 +304,46 @@ async function getCachedRiskSnapshot(icao: string): Promise<RiskResult | null> {
  * Save risk snapshot to database
  */
 async function saveRiskSnapshot(airlineId: string, result: RiskResult): Promise<void> {
+  // Extract component scores and confidence levels
+  const jurisdictionComp = result.components.jurisdiction;
+  const scaleComp = result.components.scale;
+  const assetLiquidityComp = result.components.assetLiquidity;
+  const financialComp = result.components.financial;
+  
   await prisma.airlineRiskSnapshot.create({
     data: {
       airlineId,
       overallScore: result.overallScore,
       riskBucket: result.riskBucket,
-      countryScore: result.components.country,
-      activityScore: result.components.activity,
-      sizeScore: result.components.size,
-      statusScore: result.components.status,
-      newsScore: result.components.news,
-      financialScore: result.components.financial,
+      dataVersion: '2.0',
+      
+      // Jurisdiction Risk
+      jurisdictionScore: jurisdictionComp?.score ?? null,
+      jurisdictionConfidence: jurisdictionComp?.confidence ?? null,
+      
+      // Scale & Network Strength
+      scaleScore: scaleComp?.score ?? null,
+      scaleConfidence: scaleComp?.confidence ?? null,
+      
+      // Fleet & Asset Liquidity
+      assetLiquidityScore: assetLiquidityComp?.score ?? null,
+      assetLiquidityConfidence: assetLiquidityComp?.confidence ?? null,
+      
+      // Financial Strength
+      financialScore: financialComp?.score ?? null,
+      financialConfidence: financialComp?.confidence ?? null,
+      
+      // Metadata
       sourceData: result.context as any,
+      componentMetadata: JSON.stringify({
+        jurisdiction: jurisdictionComp?.metadata,
+        scale: scaleComp?.metadata,
+        assetLiquidity: assetLiquidityComp?.metadata,
+        financial: financialComp?.metadata,
+      }),
+      reweighted: result.metadata?.reweighted ?? false,
+      missingComponents: result.metadata?.missingComponents?.join(', ') ?? null,
+      
       calculatedAt: result.calculatedAt,
       expiresAt: result.expiresAt,
     },

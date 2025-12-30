@@ -104,55 +104,57 @@ function EditExposureModal({ portfolioId, exposure, onClose }: EditExposureModal
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">
+    <div className="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-80 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 border border-transparent dark:border-gray-700">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
           Edit Exposure: {exposure.airline.name}
         </h3>
 
         {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="exposureAmount" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="exposureAmount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Exposure Amount *
             </label>
             <input
               type="text"
               id="exposureAmount"
               required
-              value={formData.exposureAmount ? Number(formData.exposureAmount).toLocaleString('en-US') : ''}
+              value={formData.exposureAmount ? Number(formData.exposureAmount).toLocaleString('en-US', { maximumFractionDigits: 2, useGrouping: true }) : ''}
               onChange={(e) => {
                 const value = e.target.value.replace(/,/g, '');
                 if (value === '' || /^\d*\.?\d*$/.test(value)) {
                   setFormData({ ...formData, exposureAmount: value });
                 }
               }}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
             />
           </div>
 
           <div>
-            <label htmlFor="currency" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="currency" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Currency *
             </label>
-            <input
-              type="text"
+            <select
               id="currency"
               required
-              maxLength={3}
               value={formData.currency}
-              onChange={(e) => setFormData({ ...formData, currency: e.target.value.toUpperCase() })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-            />
+              onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+            >
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+            </select>
           </div>
 
           <div>
-            <label htmlFor="numAircraft" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="numAircraft" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Number of Aircraft (Optional)
             </label>
             <input
@@ -161,7 +163,7 @@ function EditExposureModal({ portfolioId, exposure, onClose }: EditExposureModal
               min="0"
               value={formData.numAircraft}
               onChange={(e) => setFormData({ ...formData, numAircraft: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
             />
           </div>
 
@@ -177,7 +179,7 @@ function EditExposureModal({ portfolioId, exposure, onClose }: EditExposureModal
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Cancel
             </button>

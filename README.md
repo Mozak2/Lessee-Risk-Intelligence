@@ -1,12 +1,13 @@
 # Airline Risk Intelligence MVP
 
-A comprehensive risk assessment platform for aircraft lessors, built with Next.js, TypeScript, and PostgreSQL.
+A comprehensive risk assessment platform for aircraft lessors, built with Next.js, TypeScript, and Supabase PostgreSQL.
 
 ## Features
 
-- **Airline Risk Scoring**: Multi-dimensional risk assessment (country, activity, size, status)
+- **Airline Risk Scoring**: Multi-dimensional risk assessment (jurisdiction, scale, asset liquidity, financial strength)
 - **Portfolio Management**: Track lease exposures and portfolio-level risk metrics
 - **Real-time Data**: Integration with free aviation and country data APIs
+- **Dark Mode**: Full light/dark theme support
 - **Extensible Architecture**: Easily add new risk dimensions (news, financial data)
 
 ## Tech Stack
@@ -14,7 +15,7 @@ A comprehensive risk assessment platform for aircraft lessors, built with Next.j
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **Database**: PostgreSQL with Prisma ORM
+- **Database**: Supabase (PostgreSQL) with Prisma ORM
 - **Data Sources**:
   - Aviation APIs (AviationStack/similar)
   - REST Countries API
@@ -25,9 +26,9 @@ A comprehensive risk assessment platform for aircraft lessors, built with Next.j
 ### Prerequisites
 
 - Node.js 18+ and npm
-- PostgreSQL database
+- Supabase account (free tier available)
 
-### Installation
+### Quick Start with Supabase
 
 1. Clone the repository:
 ```bash
@@ -40,23 +41,31 @@ cd Lessee-Risk-Intelligence
 npm install
 ```
 
-3. Set up environment variables:
+3. Set up Supabase:
+   - Create a free account at [supabase.com](https://supabase.com)
+   - Create a new project
+   - Get your connection strings from Settings > Database
+   - See detailed instructions in [SUPABASE_SETUP.md](./SUPABASE_SETUP.md)
+
+4. Configure environment variables:
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and configure your database connection:
-```
-DATABASE_URL="postgresql://user:password@localhost:5432/airline_risk_db?schema=public"
+Edit `.env` with your Supabase connection strings:
+```env
+DATABASE_URL="postgresql://postgres.xxxxx:[PASSWORD]@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
+DIRECT_URL="postgresql://postgres.xxxxx:[PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
 ```
 
-4. Initialize the database:
+5. Initialize the database:
 ```bash
-npm run db:push
-npm run db:generate
+npx prisma generate
+npx prisma db push
+npm run db:seed
 ```
 
-5. Run the development server:
+6. Run the development server:
 ```bash
 npm run dev
 ```
@@ -89,23 +98,53 @@ The platform uses a pluggable risk model with multiple dimensions:
 
 ### Risk Components (Current)
 
-1. **Country Risk** (35% weight)
+## Risk Model
+
+The platform uses a pluggable risk model with multiple dimensions:
+
+### Risk Components (v2.0 - Refactored)
+
+1. **Jurisdiction Risk (proxy)** (25% weight)
    - Regional risk assessment
    - Economic stability indicators (Gini coefficient)
+   - Confidence: HIGH/MEDIUM based on data availability
 
-2. **Activity Risk** (25% weight)
-   - Flight operations in last 24 hours
-   - Operational activity level
+2. **Scale & Network Strength** (20% weight)
+   - Fleet size as primary indicator
+   - Market presence and stability
+   - Confidence: HIGH when fleet data available
 
-3. **Size & Status Risk** (40% weight)
-   - Fleet size
-   - Active/inactive status
+3. **Fleet & Asset Liquidity (proxy)** (20% weight)
+   - Fleet composition risk (narrowbody vs widebody)
+   - Currently returns neutral score with LOW confidence
+   - Placeholder for future fleet mix analysis
+
+4. **Financial Strength** (35% weight)
+   - Debt-to-Equity ratio
+   - Profit margins
+   - Cash-to-Debt liquidity
+   - Returns null when unavailable (private airlines)
+   - Confidence: HIGH for public companies with recent data
 
 ### Risk Scoring
 
-- **0-30**: Low Risk (Green)
-- **31-60**: Medium Risk (Yellow)
-- **61-100**: High Risk (Red)
+- **0-40**: Low Risk (Green)
+- **40-70**: Medium Risk (Yellow)
+- **70-100**: High Risk (Red)
+
+### Confidence Levels
+
+Each component includes a confidence level:
+- **HIGH**: Reliable data from primary sources
+- **MEDIUM**: Derived or proxy data
+- **LOW**: Placeholder or insufficient data
+
+### Score Reweighting
+
+When components are unavailable (e.g., financials for private airlines):
+- Null components are excluded from calculation
+- Remaining components are reweighted proportionally
+- Metadata tracks missing components and reweighting status
 
 ### Extensibility
 

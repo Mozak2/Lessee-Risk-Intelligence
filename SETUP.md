@@ -1,6 +1,25 @@
 # 🚀 Setup Guide - Airline Risk Intelligence
 
-## Prerequisites Installation
+## Quick Start (Recommended - Supabase)
+
+**New users should use Supabase** - it's faster, easier, and includes free hosting.
+
+👉 **Follow the complete guide**: [SUPABASE_SETUP.md](./SUPABASE_SETUP.md)
+
+Quick steps:
+1. Create free Supabase account at [supabase.com](https://supabase.com)
+2. Create a new project (takes 2 minutes)
+3. Copy connection strings to `.env` file
+4. Run: `npx prisma db push && npm run db:seed`
+5. Start app: `npm run dev`
+
+---
+
+## Alternative: Local PostgreSQL Setup
+
+If you prefer running PostgreSQL locally instead of using Supabase:
+
+### Prerequisites
 
 You need to install the following software before running this application:
 
@@ -21,7 +40,7 @@ npm --version
 
 You should see version numbers (e.g., v20.x.x and 10.x.x).
 
-### 2. Install PostgreSQL
+### 2. Install PostgreSQL Locally
 
 **Download and Install:**
 - Visit: https://www.postgresql.org/download/windows/
@@ -37,7 +56,7 @@ After installation, open pgAdmin 4 or use psql to create a database:
 CREATE DATABASE airline_risk_db;
 ```
 
-## Project Setup
+## Project Setup (Local PostgreSQL)
 
 Once Node.js and PostgreSQL are installed:
 
@@ -47,7 +66,7 @@ cd c:\Users\moiib\Lessee-Risk-Intelligence
 npm install
 ```
 
-### Step 2: Configure Environment Variables
+### Step 2: Configure Environment Variables (Local)
 
 Edit the `.env` file in the project root with your database credentials:
 ```

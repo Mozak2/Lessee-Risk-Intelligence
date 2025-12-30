@@ -5,8 +5,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // Airline master data
@@ -39,19 +40,33 @@ model AirlineRiskSnapshot {
   overallScore    Float    // 0-100
   riskBucket      String   // Low/Medium/High
   
-  // Component scores (extensible)
-  countryScore    Float?   // 0-100
-  activityScore   Float?   // 0-100
-  sizeScore       Float?   // 0-100
-  statusScore     Float?   // 0-100
+  // NEW: Component scores with confidence levels
+  // Jurisdiction Risk (formerly country)
+  jurisdictionScore      Float?
+  jurisdictionConfidence String?  // HIGH/MEDIUM/LOW
+  
+  // Scale & Network Strength
+  scaleScore            Float?
+  scaleConfidence       String?
+  
+  // Fleet & Asset Liquidity
+  assetLiquidityScore      Float?
+  assetLiquidityConfidence String?
+  
+  // Financial Strength
+  financialScore        Float?
+  financialConfidence   String?
   
   // Future dimensions
   newsScore       Float?   // For future news sentiment analysis
-  financialScore  Float?   // For future financial health metrics
+  newsConfidence  String?
   
   // Metadata for caching and debugging
-  dataVersion     String   @default("1.0")
+  dataVersion     String   @default("2.0")  // Updated version for new schema
   sourceData      String?  // Store raw data for debugging (JSON string for SQLite)
+  componentMetadata String? // Store component metadata (JSON string)
+  reweighted      Boolean  @default(false) // True if scores were reweighted due to missing data
+  missingComponents String? // Comma-separated list of missing components
   calculatedAt    DateTime @default(now())
   expiresAt       DateTime // For cache invalidation
   

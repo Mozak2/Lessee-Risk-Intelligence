@@ -1,18 +1,26 @@
 // Risk model type definitions and interfaces
 
 export type RiskDimensionKey =
-  | 'country'
-  | 'activity'
-  | 'size'
-  | 'status'
-  | 'news'       // Future
-  | 'financial'; // Future
+  | 'jurisdiction'    // Renamed from 'country'
+  | 'scale'          // Renamed from 'size' - Scale & Network Strength
+  | 'assetLiquidity' // NEW - Fleet & Asset Liquidity
+  | 'financial'      // Financial Strength
+  | 'news';          // Future
 
 export type RiskBucket = 'Low' | 'Medium' | 'High';
 
+export type ConfidenceLevel = 'HIGH' | 'MEDIUM' | 'LOW';
+
+// Component score with confidence level
+export interface ComponentScore {
+  score: number | null; // 0-100 scale, or null if unavailable
+  confidence: ConfidenceLevel;
+  metadata?: Record<string, any>; // Additional context about the score
+}
+
 // Component scores from different risk dimensions (0-100 scale)
 export interface RiskComponents {
-  [key: string]: number | any; // Allow metadata objects alongside numeric scores
+  [key: string]: ComponentScore | any; // Allow metadata objects alongside scores
 }
 
 // Context data for risk calculation
@@ -57,7 +65,8 @@ export interface RiskSource {
   weight: number; // Relative weight in overall score calculation
   
   // Calculate component scores (0-100) from context
-  calculate(context: RiskContext): Promise<RiskComponents>;
+  // Returns ComponentScore with confidence level and optional metadata
+  calculate(context: RiskContext): Promise<ComponentScore>;
 }
 
 // Overall risk result
@@ -68,12 +77,18 @@ export interface RiskResult {
   breakdown: {
     key: RiskDimensionKey;
     name: string;
-    score: number;
+    score: number | null;
+    confidence: ConfidenceLevel;
     weight: number;
+    effectiveWeight?: number; // Actual weight used if components were missing
   }[];
   context: RiskContext;
   calculatedAt: Date;
   expiresAt: Date;
+  metadata?: {
+    missingComponents?: string[];
+    reweighted?: boolean;
+  };
 }
 
 // Configuration for risk calculation

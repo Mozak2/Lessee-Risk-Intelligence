@@ -1,5 +1,5 @@
 // Financial risk source for airline risk assessment
-import { RiskSource, RiskComponents, RiskContext } from '../risk-model';
+import { RiskSource, ComponentScore, RiskContext } from '../risk-model';
 import {
   getFundamentalsForTicker,
   getTickerFromIcao,
@@ -14,33 +14,35 @@ import {
  * - Profit Margin: Lower/negative = riskier (airlines typically 2-10%)
  * - Cash-to-Debt Ratio: Lower = riskier (measures liquidity)
  * 
- * Output: 0-100 scale (lower is better)
+ * Output: 0-100 scale (lower is better), or null if unavailable
  * - 0-30: Strong financials
  * - 31-60: Moderate financial health
  * - 61-100: Financial stress/weakness
+ * - null: Not publicly traded or data unavailable
  */
 
 export const financialRiskSource: RiskSource = {
   key: 'financial',
-  name: 'Financial Risk',
+  name: 'Financial Strength',
   description: 'Risk based on financial health: debt levels, profitability, liquidity',
   enabled: true,
-  weight: 0.2, // 20% of overall risk score
+  weight: 0.35, // 35% of overall risk score
 
-  async calculate(context: RiskContext): Promise<RiskComponents> {
+  async calculate(context: RiskContext): Promise<ComponentScore> {
     const icao = context.airline.icao;
 
     // Get stock ticker for the airline
     const ticker = getTickerFromIcao(icao);
 
-    // If no ticker (private airline), return neutral score with metadata
+    // If no ticker (private airline), return null score
     if (!ticker) {
       return {
-        financial: 50, // Neutral risk score
-        financialMetadata: {
-          available: false,
+        score: null,
+        confidence: 'LOW',
+        metadata: {
           reason: 'Not publicly traded',
           dataSource: 'none',
+          note: 'Financial data unavailable for private airlines',
         },
       };
     }
@@ -48,12 +50,12 @@ export const financialRiskSource: RiskSource = {
     // Fetch financial fundamentals
     const fundamentals = await getFundamentalsForTicker(ticker);
 
-    // If data fetch failed, return neutral score
+    // If data fetch failed, return null score
     if (!fundamentals) {
       return {
-        financial: 50,
-        financialMetadata: {
-          available: false,
+        score: null,
+        confidence: 'LOW',
+        metadata: {
           reason: 'Financial data unavailable',
           ticker,
           dataSource: 'none',
@@ -65,18 +67,16 @@ export const financialRiskSource: RiskSource = {
     const riskScore = computeFinancialRisk(fundamentals);
 
     return {
-      financial: riskScore,
-      financialMetadata: {
-        available: true,
+      score: riskScore,
+      confidence: fundamentals.dataSource === 'api' ? 'HIGH' : 'MEDIUM',
+      metadata: {
         ticker,
         dataSource: fundamentals.dataSource,
-        fundamentals: {
-          debtToEquity: fundamentals.debtToEquity,
-          profitMargin: fundamentals.profitMargin,
-          cashToDebt: fundamentals.cashToDebt,
-          currency: fundamentals.currency,
-          fiscalYear: fundamentals.fiscalYear,
-        },
+        debtToEquity: fundamentals.debtToEquity,
+        profitMargin: fundamentals.profitMargin,
+        cashToDebt: fundamentals.cashToDebt,
+        currency: fundamentals.currency,
+        fiscalYear: fundamentals.fiscalYear,
       },
     };
   },

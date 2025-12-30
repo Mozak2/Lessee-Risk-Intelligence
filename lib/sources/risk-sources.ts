@@ -1,28 +1,33 @@
 // Risk sources for airline risk assessment
 
-import { RiskSource, RiskComponents, RiskContext, RiskDimensionKey, normalizeScore } from '../risk-model';
+import { RiskSource, ComponentScore, RiskContext, RiskDimensionKey, normalizeScore } from '../risk-model';
 import { financialRiskSource } from './financial';
 
-export const countryRiskSource: RiskSource = {
-  key: 'country' as RiskDimensionKey,
-  name: 'Country Risk',
-  description: 'Risk assessment based on the airline\'s country of operation',
+// Jurisdiction Risk (proxy) - Country-based risk assessment
+export const jurisdictionRiskSource: RiskSource = {
+  key: 'jurisdiction' as RiskDimensionKey,
+  name: 'Jurisdiction Risk (proxy)',
+  description: 'Risk assessment based on the airline\'s country of operation and regulatory environment',
   enabled: true,
-  weight: 0.28, // 28% of overall score
+  weight: 0.25, // 25% of overall score
   
-  async calculate(context: RiskContext): Promise<RiskComponents> {
-    const components: RiskComponents = {};
-    
+  async calculate(context: RiskContext): Promise<ComponentScore> {
     if (!context.countryInfo) {
-      // If no country data, assign moderate risk
-      components.country = 50;
-      return components;
+      // If no country data, return moderate risk with low confidence
+      return {
+        score: 50,
+        confidence: 'LOW',
+        metadata: {
+          reason: 'Country data unavailable',
+          note: 'This is a proxy measure based on available regional data',
+        },
+      };
     }
     
     // Simple country risk heuristics
     let countryRisk = 40; // Base moderate risk
     
-    // Regional risk adjustments (simplified)
+    // Regional risk adjustments (simplified proxy)
     const region = context.countryInfo.region?.toLowerCase();
     if (region === 'europe' || region === 'americas') {
       countryRisk -= 15; // Lower risk
@@ -34,106 +39,133 @@ export const countryRiskSource: RiskSource = {
     
     // Economic stability indicator (Gini coefficient)
     // Higher Gini = more inequality = higher risk
+    let confidence: 'HIGH' | 'MEDIUM' | 'LOW' = 'MEDIUM';
     if (context.countryInfo.gini) {
       const giniRisk = normalizeScore(context.countryInfo.gini, 25, 65, false);
       countryRisk = (countryRisk * 0.7) + (giniRisk * 0.3);
+      confidence = 'HIGH'; // Have both region and Gini data
+    } else {
+      confidence = 'MEDIUM'; // Only region data
     }
     
     // Ensure score is in 0-100 range
-    components.country = Math.max(0, Math.min(100, countryRisk));
+    const finalScore = Math.max(0, Math.min(100, countryRisk));
     
-    return components;
+    return {
+      score: finalScore,
+      confidence,
+      metadata: {
+        region: context.countryInfo.region,
+        gini: context.countryInfo.gini,
+        note: 'Proxy measure based on regional and economic indicators',
+      },
+    };
   },
 };
 
-// Operational Presence risk source - assesses risk based on operational status and fleet
-export const operationalPresenceRiskSource: RiskSource = {
-  key: 'activity' as RiskDimensionKey,
-  name: 'Operational Presence Risk',
-  description: 'Risk assessment based on airline\'s operational status and fleet presence',
+// Scale & Network Strength - Fleet size is the PRIMARY indicator (no longer split)
+export const scaleAndNetworkRiskSource: RiskSource = {
+  key: 'scale' as RiskDimensionKey,
+  name: 'Scale & Network Strength',
+  description: 'Risk assessment based on airline size and network scale (fleet size)',
   enabled: true,
   weight: 0.20, // 20% of overall score
   
-  async calculate(context: RiskContext): Promise<RiskComponents> {
-    const components: RiskComponents = {};
-    
-    const isActive = context.airline.active;
+  async calculate(context: RiskContext): Promise<ComponentScore> {
     const fleetSize = context.airline.fleetSize ?? 0;
     
-    // Operational Presence Risk scoring:
-    // - Inactive airline = very high risk (80)
-    // - Active + small fleet (<10) = high risk (60)
-    // - Active + fleet 10-50 = moderate risk (45)
-    // - Active + fleet >50 = low risk (30)
-    // - Active + fleet >200 = very low risk (20)
+    // Fleet size is the ONLY factor for scale risk
+    // Larger fleet = more diversification, economies of scale, market presence
+    let scaleRisk: number;
+    let confidence: 'HIGH' | 'MEDIUM' | 'LOW';
     
-    let operationalRisk: number;
-    
-    if (!isActive) {
-      operationalRisk = 80; // Inactive = high risk
-    } else if (fleetSize === 0) {
-      operationalRisk = 70; // Active but no fleet data
+    if (fleetSize === 0) {
+      // No fleet data available
+      return {
+        score: 50, // Neutral
+        confidence: 'LOW',
+        metadata: {
+          reason: 'Fleet size data unavailable',
+          fleetSize: null,
+        },
+      };
     } else if (fleetSize < 10) {
-      operationalRisk = 60; // Very small operator
+      scaleRisk = 70; // Very small operator - high risk
+      confidence = 'HIGH';
+    } else if (fleetSize < 25) {
+      scaleRisk = 60; // Small operator
+      confidence = 'HIGH';
     } else if (fleetSize < 50) {
-      operationalRisk = 45; // Small to medium operator
+      scaleRisk = 45; // Small-medium operator
+      confidence = 'HIGH';
+    } else if (fleetSize < 100) {
+      scaleRisk = 35; // Medium operator
+      confidence = 'HIGH';
     } else if (fleetSize < 200) {
-      operationalRisk = 30; // Medium to large operator
+      scaleRisk = 25; // Large operator
+      confidence = 'HIGH';
     } else {
-      operationalRisk = 20; // Major operator
+      scaleRisk = 15; // Major operator - low risk
+      confidence = 'HIGH';
     }
     
-    components.activity = operationalRisk;
-    
-    return components;
+    return {
+      score: scaleRisk,
+      confidence,
+      metadata: {
+        fleetSize,
+        category: fleetSize >= 200 ? 'Major' : fleetSize >= 100 ? 'Large' : fleetSize >= 50 ? 'Medium' : fleetSize >= 25 ? 'Small-Medium' : 'Small',
+      },
+    };
   },
 };
 
-// Fleet and status risk source - assesses risk based on fleet size and active status
-export const sizeAndStatusRiskSource: RiskSource = {
-  key: 'size' as RiskDimensionKey,
-  name: 'Fleet & Status Risk',
-  description: 'Risk assessment based on fleet size and operational status',
+// Fleet & Asset Liquidity (proxy) - NEW component
+export const assetLiquidityRiskSource: RiskSource = {
+  key: 'assetLiquidity' as RiskDimensionKey,
+  name: 'Fleet & Asset Liquidity (proxy)',
+  description: 'Risk based on fleet composition and asset marketability',
   enabled: true,
-  weight: 0.32, // 32% of overall score
+  weight: 0.20, // 20% of overall score
   
-  async calculate(context: RiskContext): Promise<RiskComponents> {
-    const components: RiskComponents = {};
-    
-    let sizeStatusRisk = 50; // Base moderate risk
-    
-    // Status risk - inactive airline is very high risk
+  async calculate(context: RiskContext): Promise<ComponentScore> {
+    // Check if active - inactive airline has very high asset liquidity risk
     if (!context.airline.active) {
-      sizeStatusRisk += 40;
+      return {
+        score: 85,
+        confidence: 'HIGH',
+        metadata: {
+          reason: 'Airline inactive - assets likely illiquid or distressed',
+          active: false,
+        },
+      };
     }
     
-    // Size risk - larger fleet typically means more stable airline
-    const fleetSize = context.airline.fleetSize ?? 0;
-    if (fleetSize === 0) {
-      sizeStatusRisk += 20;
-    } else if (fleetSize < 10) {
-      sizeStatusRisk += 15; // Small fleet = higher risk
-    } else if (fleetSize < 50) {
-      sizeStatusRisk += 5;
-    } else if (fleetSize >= 100) {
-      sizeStatusRisk -= 15; // Large fleet = lower risk
-    } else {
-      sizeStatusRisk -= 5;
-    }
+    // TODO: In future, analyze fleet composition (narrowbody vs widebody)
+    // For now, we don't have fleet composition data
+    // Narrowbody-heavy (A320, B737) = lower risk (more liquid)
+    // Widebody-heavy (A380, B777) = higher risk (less liquid, harder to place)
     
-    components.size = Math.max(0, Math.min(100, sizeStatusRisk));
-    components.status = context.airline.active ? 20 : 90;
-    
-    return components;
+    // Return neutral score with LOW confidence since we lack fleet composition data
+    return {
+      score: null, // No score - data unavailable
+      confidence: 'LOW',
+      metadata: {
+        reason: 'Fleet composition data unavailable',
+        fleetCompositionUnavailable: true,
+        note: 'Future enhancement: analyze narrowbody vs widebody mix',
+        active: context.airline.active,
+      },
+    };
   },
 };
 
 // Export all enabled sources for the aggregator
 export const enabledRiskSources: RiskSource[] = [
-  countryRiskSource,
-  operationalPresenceRiskSource, // Renamed from activityRiskSource
-  sizeAndStatusRiskSource,
-  financialRiskSource, // NEW: Financial risk based on debt, profitability, liquidity
+  jurisdictionRiskSource,      // 25% - Country-based risk
+  scaleAndNetworkRiskSource,   // 20% - Fleet size only
+  assetLiquidityRiskSource,    // 20% - Fleet composition (currently unavailable)
+  financialRiskSource,         // 35% - Financial strength (returns null if unavailable)
   // Future sources can be added here:
   // newsRiskSource,
 ];
